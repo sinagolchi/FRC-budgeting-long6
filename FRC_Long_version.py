@@ -57,7 +57,7 @@ with st.sidebar:
     df_v = get_sql('frc_long_variables')
     df_v.set_index('board',inplace=True)
     round = df_v.loc[board,'round']
-    st.metric(label='Game round', value=df_v.loc[board,'round'])
+    #st.metric(label='Game round', value=df_v.loc[board,'round'])
 
 try:
     st.header("Your role is: " + str(user_dict[user_id]) + " on board " + str(board))
