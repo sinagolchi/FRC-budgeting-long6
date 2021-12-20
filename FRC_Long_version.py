@@ -82,14 +82,15 @@ st.metric(value='$'+str(df.loc[user_id,'cb']),delta=int(df.loc[user_id,'delta'])
 
 st.subheader('Participants budgets')
 
-metric_cols_1 = st.columns(7)
-metric_cols_2 = st.columns(7)
-metric_cols_3 = st.columns(7)
-metric_cols = metric_cols_1 + metric_cols_2 + metric_cols_3
+with st.expander('budgets'):
+    metric_cols_1 = st.columns(7)
+    metric_cols_2 = st.columns(7)
+    metric_cols_3 = st.columns(7)
+    metric_cols = metric_cols_1 + metric_cols_2 + metric_cols_3
 
-for col, role in zip(metric_cols,other_roles):
-    with col:
-        st.metric(label=user_dict[role],value='$'+str(df.loc[role,'cb']),delta=int(df.loc[role,'delta']))
+    for col, role in zip(metric_cols,other_roles):
+        with col:
+            st.metric(label=user_dict[role],value='$'+str(df.loc[role,'cb']),delta=int(df.loc[role,'delta']))
 
 update_bid_measure = ("UPDATE measures_lb1 SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
 update_bid_role =  ("UPDATE budget_lb1 SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
