@@ -3,6 +3,7 @@ import pandas as pd
 import psycopg2
 import time
 import pytz
+import streamlit.components.v1 as components
 
 st.set_page_config(layout='wide') #set streamlit page to wide mode
 
@@ -89,9 +90,10 @@ other_roles = [x for x in user_dict.keys() if x != user_id]
 df.set_index('role',inplace=True)
 df_m.set_index('measure_id',inplace=True)
 
+components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",width=1000,height=787)
+
 st.header('Your budget')
 st.metric(value='$'+str(df.loc[user_id,'cb']),delta=int(df.loc[user_id,'delta']),label="My Current budget")
-
 
 
 with st.expander('Participants budgets'):
@@ -105,11 +107,98 @@ with st.expander('Participants budgets'):
             st.metric(label=user_dict[role],value='$'+str(df.loc[role,'cb']),delta=int(df.loc[role,'delta']))
 
 
-def bidding_section():
-    update_bid_measure = ("UPDATE measures_lb1 SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
-    update_bid_role =  ("UPDATE budget_lb1 SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
-    log_bid = ("INSERT INTO measure_log VALUES (NOW(),%s,%s,%s,%s);")
+#sql queries for bidding
+update_bid_measure = ("UPDATE measures_lb1 SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
+update_bid_role =  ("UPDATE budget_lb1 SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
+log_bid = ("INSERT INTO measure_log VALUES (NOW(),%s,%s,%s,%s);")
 
+#sql queries for taxes
+update_tax =  ("UPDATE budget_lb1 SET r%s_tax = %s, cb = cb - %s WHERE role=%s;")
+update_taxman = ("UPDATE budget_lb1 SET cb = cb + %s WHERE role=%s;")
+
+
+
+#SQL queries for budget manipulation
+update_budget = ("UPDATE budget_lb1 SET cb = %s WHERE role=%s;")
+update_delta =  ("UPDATE budget_lb1 SET delta = %s WHERE role=%s;")
+log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
+
+
+def taxes_section():
+    auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
+    def pay_tax(user_id):
+        df_v = get_sql('frc_long_variables')
+        df_v.set_index('board', inplace=True)
+        curA = conn.cursor()
+        tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
+        st.write(tax_total)
+        curA.execute(update_tax,(int(round),True,tax_total,user_id))
+        curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
+        curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
+        curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
+        conn.commit()
+        with st.spinner('Depositing taxes'):
+            time.sleep(2)
+        st.success('You payed your taxes :)')
+        time.sleep(2)
+        st.experimental_rerun()
+
+    def tax_increase(authority, increment):
+        # sql query for tax increase
+
+        auth_dict = {'PP':'provincial_tax', 'FP':'federal_tax', 'M':'municipal_tax'}
+        increase_tax_db = ("UPDATE frc_long_variables SET " + auth_dict[authority] + '=' + auth_dict[authority] +"+ %s WHERE board=%s")
+
+        curA = conn.cursor()
+        curA.execute(increase_tax_db,(increment,board))
+        conn.commit()
+        with st.spinner('Consulting with ministers'):
+            time.sleep(2)
+        st.success('Tax rate increased :|')
+        time.sleep(2)
+
+    if ((user_id == 'PP' or user_id=='M') or user_id =='FP') and round != 1:
+        st.header("Determine tax rate for this round")
+        st.markdown('You can increase ' +  auth_name_dict[user_id] +' by the amount below:')
+        col1 , col2 = st.columns(2)
+        with col1:
+            increment = st.number_input(label='Increase by', value=0, min_value=0, max_value=2)
+        with col2:
+            confirm_tax_inc = st.button(label='Confirm tax increase')
+
+        if confirm_tax_inc:
+            tax_increase(user_id,increment)
+
+    elif ((user_id == 'PP' or user_id=='M') or user_id =='FP') and round == 1:
+        st.header("Determine tax rate for this round")
+        st.markdown('The ' + auth_name_dict[user_id] + ' is set to 1 budget unit for the first round \n'
+                                                       'you will get a chance to increase it in the next rounds')
+
+    elif user_id == 'LEF':
+        st.header('Taxes')
+        st.markdown('You live outside of Hydroson therefore you do not need to pay taxes')
+
+    else:
+        st.header('Taxes')
+        if not df.loc[user_id,'r' + str(round) + '_tax']:
+            st.markdown('Please settle your taxes before going forward')
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label='Municipal tax',value=df_v.loc[board,'municipal_tax'])
+            with col2:
+                st.metric(label='Provincial tax',value=df_v.loc[board,'provincial_tax'])
+            with col3:
+                st.metric(label='Federal_tax', value=df_v.loc[board,'federal_tax'])
+
+            tax = st.button(label='Pay taxes')
+            if tax:
+                pay_tax(user_id)
+        else:
+            st.success('Your taxes are settled for this round')
+
+
+
+def bidding_section():
     def make_bid_func(measure, amount):
         df = get_sql('budget_lb1')
         df.set_index('role',inplace=True)
@@ -174,10 +263,9 @@ def bidding_section():
                     'r' + str(round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
 
 
+
 def transaction_section():
-    update_budget = ("UPDATE budget_lb1 SET cb = %s WHERE role=%s;")
-    update_delta =  ("UPDATE budget_lb1 SET delta = %s WHERE role=%s;")
-    log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
+
 
     def money_transfer(amount,r_party):
         curA = conn.cursor()
@@ -230,60 +318,62 @@ def transaction_section():
             df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
             st.dataframe(df_p_log)
 
-dict_phase_case = {0:None,1: bidding_section, 2:transaction_section}
+dict_phase_case = {0:taxes_section, 1: bidding_section, 2:transaction_section}
 
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
 
-# insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
-# #function for buying insurance
-# def insure_me(user, action):
-#     cur = conn.cursor()
-#     cur.execute(insurance_update,(round,action,user))
-#     if action:
-#         cur.execute(update_budget, (int(df.loc[user_id, 'cb']) - 1, user_id))
-#         cur.execute(update_delta, (-1, user_id))
-#         conn.commit()
-#         with st.spinner('Preparing your policy'):
-#             time.sleep(2)
-#         st.success('You are insured :)')
-#         time.sleep(2)
-#         st.experimental_rerun()
-#     else:
-#         cur.execute(update_budget, (int(df.loc[user_id, 'cb']) + 1, user_id))
-#         cur.execute(update_delta, (+1, user_id))
-#         conn.commit()
-#         with st.spinner('Cancelling your policy'):
-#             time.sleep(2)
-#         st.success('Your policy was canceled successfully')
-#         time.sleep(2)
-#         st.experimental_rerun()
-#
-#
-# # Insurance section sidebar
-# with st.sidebar:
-#     if user_id =='I':
-#         st.header('Insurance deals')
-#         slogan = st.text_input(label='Set your slogan for selling insurance', value=df_v.loc[board,'insurance_slogan'])
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
-#         with col2:
-#             st.metric(label='Current Price', value=df_v.loc[board,'insurance_price'])
-#     else:
-#         st.header('Flood insurance')
-#         if not df.loc[user_id,'r'+str(round)+'_insurance']:
-#             st.warning('You are not insured for round ' + str(round))
-#             st.subheader('Would you like to purchase insurance?')
-#             col1, col2 = st.columns(2)
-#             with col1:
-#                 insure = st.button(label='Buy insurance')
-#             with col2:
-#                 st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
-#             if insure:
-#                 insure_me(user_id, True)
-#         else:
-#             st.success('your property is insured for round ' + str(round))
-#             cancel_policy = st.button(label='Cancel policy')
-#             if cancel_policy:
-#                 insure_me(user_id,False)
+insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
+#function for buying insurance
+def insure_me(user, action):
+    cur = conn.cursor()
+    cur.execute(insurance_update,(round,action,user))
+    if action:
+        cur.execute(update_budget, (int(df.loc[user_id, 'cb']) - 1, user_id))
+        cur.execute(update_delta, (-1, user_id))
+        conn.commit()
+        with st.spinner('Preparing your policy'):
+            time.sleep(2)
+        st.success('You are insured :)')
+        time.sleep(2)
+        st.experimental_rerun()
+    else:
+        cur.execute(update_budget, (int(df.loc[user_id, 'cb']) + 1, user_id))
+        cur.execute(update_delta, (+1, user_id))
+        conn.commit()
+        with st.spinner('Cancelling your policy'):
+            time.sleep(2)
+        st.success('Your policy was canceled successfully')
+        time.sleep(2)
+        st.experimental_rerun()
+
+components.iframe('<iframe width="768" height="432" src="https://miro.com/app/live-embed/o9J_lLwNWM4=/?moveToViewport=-14424,-1293,6949,6859" frameBorder="0" scrolling="no" allowFullScreen></iframe>')
+
+#Insurance section sidebar
+with st.sidebar:
+    if user_id =='I':
+        st.header('Insurance deals')
+        slogan = st.text_input(label='Set your slogan for selling insurance', value=df_v.loc[board,'insurance_slogan'])
+        col1, col2 = st.columns(2)
+        with col1:
+            insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
+        with col2:
+            st.metric(label='Current Price', value=df_v.loc[board,'insurance_price'])
+    else:
+        st.header('Flood insurance')
+        if not df.loc[user_id,'r'+str(round)+'_insurance']:
+            st.warning('You are not insured for round ' + str(round))
+            st.subheader('Would you like to purchase insurance?')
+            col1, col2 = st.columns(2)
+            with col1:
+                insure = st.button(label='Buy insurance')
+            with col2:
+                st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
+            if insure:
+                insure_me(user_id, True)
+        else:
+            st.success('your property is insured for round ' + str(round))
+            cancel_policy = st.button(label='Cancel policy')
+            if cancel_policy:
+                insure_me(user_id,False)
+
