@@ -68,7 +68,7 @@ with st.sidebar:
     with col1:
         st.metric(label='Game Round', value=int(df_v.loc[board,'round']))
     with col2:
-        st.metric(label='Game Phase', value=df_v.loc[board, 'phase'])
+        st.metric(label='Game Phase', value=int(df_v.loc[board, 'phase']))
     st.button(label='Refresh Data',on_click=refresh)
 
 
