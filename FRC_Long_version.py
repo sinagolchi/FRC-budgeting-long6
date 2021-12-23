@@ -347,7 +347,6 @@ def insure_me(user, action):
         time.sleep(2)
         st.experimental_rerun()
 
-components.iframe('<iframe width="768" height="432" src="https://miro.com/app/live-embed/o9J_lLwNWM4=/?moveToViewport=-14424,-1293,6949,6859" frameBorder="0" scrolling="no" allowFullScreen></iframe>')
 
 #Insurance section sidebar
 with st.sidebar:
