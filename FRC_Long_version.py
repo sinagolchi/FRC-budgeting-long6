@@ -90,8 +90,12 @@ other_roles = [x for x in user_dict.keys() if x != user_id]
 df.set_index('role',inplace=True)
 df_m.set_index('measure_id',inplace=True)
 
-with st.expander('Miro board'):
-    components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",width=1000,height=740)
+
+def miro_board():
+    with st.expander('Miro board', expanded=True):
+        components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",height=740)
+
+miro_board()
 
 st.header('Your budget')
 st.metric(value='$'+str(df.loc[user_id,'cb']),delta=int(df.loc[user_id,'delta']),label="My Current budget")
