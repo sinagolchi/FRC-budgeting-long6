@@ -4,9 +4,12 @@ import psycopg2
 import time
 import pytz
 import streamlit.components.v1 as components
+import seaborn as sns
 
 st.set_page_config(layout='wide') #set streamlit page to wide mode
+back_ground_color = st.get_option('theme.base')
 
+st.write(back_ground_color)
 
 def refresh():
     st.experimental_rerun()
@@ -91,11 +94,10 @@ df.set_index('role',inplace=True)
 df_m.set_index('measure_id',inplace=True)
 
 
-def miro_board():
-    with st.expander('Miro board', expanded=True):
-        components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",height=740)
 
-miro_board()
+with st.expander('Miro board', expanded=True):
+    components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",height=740)
+
 
 st.header('Your budget')
 st.metric(value='$'+str(df.loc[user_id,'cb']),delta=int(df.loc[user_id,'delta']),label="My Current budget")
@@ -120,7 +122,6 @@ log_bid = ("INSERT INTO measure_log VALUES (NOW(),%s,%s,%s,%s);")
 #sql queries for taxes
 update_tax =  ("UPDATE budget_lb1 SET r%s_tax = %s, cb = cb - %s WHERE role=%s;")
 update_taxman = ("UPDATE budget_lb1 SET cb = cb + %s WHERE role=%s;")
-
 
 
 #SQL queries for budget manipulation
@@ -323,7 +324,69 @@ def transaction_section():
             df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
             st.dataframe(df_p_log)
 
-dict_phase_case = {0:taxes_section, 1: bidding_section, 2:transaction_section}
+#Voting section
+
+update_vote_DB = ("UPDATE budget_lb1 SET r%s_vote=ARRAY[%s,%s,%s] WHERE role=%s;")
+vote_override = True
+
+def voting():
+    df = get_sql('budget_lb1')
+    df.set_index('role',inplace=True)
+    st.header('Round ' + str(round) + ' vote of confidence')
+    if df.loc[user_id,'r'+str(round)+'_vote'] is None:
+        def submit_vote(results, user):
+            curA = conn.cursor()
+            curA.execute(update_vote_DB, (int(round), *results, user))
+            conn.commit()
+            with st.spinner('submitting your vote'):
+                time.sleep(2)
+            st.success('Your vote is submitted, awaiting results')
+
+
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown('Mayor')
+            M_vote = st.radio(key='M_vote',label='Your vote',options=['In Favor','Against'])
+        with col2:
+            st.markdown('Provincial Politician')
+            PP_vote = st.radio(key='PP_vote',label='Your vote',options=['In Favor','Against'])
+        with col3:
+            st.markdown('Federal Politician')
+            FP_vote = st.radio(key='FP_vote',label='Your vote',options=['In Favor','Against'])
+        with col4:
+            approve_vote = st.button(label='submit your vote')
+
+        if approve_vote:
+            submit_vote([M_vote,PP_vote,FP_vote],user_id)
+
+
+    elif not [i for i in df.loc[:,'r'+str(round)+'_vote'] if i == None] or vote_override:
+        vote = []
+        vote_round = []
+        official = []
+        for r in range(1,4):
+            for v in df.loc[:,'r'+str(r)+'_vote']:
+                if v is not None:
+                    for i, o in zip(range(3),['Mayor','Provincial politician','Federal politician']):
+                        vote.append(v[i])
+                        official.append(o)
+                        vote_round.append(r)
+        df_vote_result = pd.DataFrame(zip(vote,official,vote_round),columns=['Votes','Official','Game round'])
+        st.dataframe(df_vote_result)
+        sns.set_theme(style='darkgrid',palette='colorblind')
+        fig = sns.catplot(data=df_vote_result,x='Votes',col='Official',kind='count',row='Game round')
+        st.pyplot(fig)
+
+
+
+    else:
+        st.write('awaiting results')
+
+
+
+voting()
+
+dict_phase_case = {0:taxes_section, 1: bidding_section, 2:transaction_section, 4:None,5:None}
 
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
@@ -332,7 +395,7 @@ insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
 #function for buying insurance
 def insure_me(user, action):
     cur = conn.cursor()
-    cur.execute(insurance_update,(round,action,user))
+    cur.execute(insurance_update,(int(round),action,user))
     if action:
         cur.execute(update_budget, (int(df.loc[user_id, 'cb']) - 1, user_id))
         cur.execute(update_delta, (-1, user_id))
