@@ -7,9 +7,6 @@ import streamlit.components.v1 as components
 import seaborn as sns
 
 st.set_page_config(layout='wide') #set streamlit page to wide mode
-back_ground_color = st.get_option('theme.base')
-
-st.write(back_ground_color)
 
 def refresh():
     st.experimental_rerun()
@@ -129,26 +126,8 @@ update_budget = ("UPDATE budget_lb1 SET cb = %s WHERE role=%s;")
 update_delta =  ("UPDATE budget_lb1 SET delta = %s WHERE role=%s;")
 log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
 
-
-def taxes_section():
+def tax_increacse_section():
     auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
-    def pay_tax(user_id):
-        df_v = get_sql('frc_long_variables')
-        df_v.set_index('board', inplace=True)
-        curA = conn.cursor()
-        tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
-        st.write(tax_total)
-        curA.execute(update_tax,(int(round),True,tax_total,user_id))
-        curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
-        curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
-        curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
-        conn.commit()
-        with st.spinner('Depositing taxes'):
-            time.sleep(2)
-        st.success('You payed your taxes :)')
-        time.sleep(2)
-        st.experimental_rerun()
-
     def tax_increase(authority, increment):
         # sql query for tax increase
 
@@ -179,8 +158,32 @@ def taxes_section():
         st.header("Determine tax rate for this round")
         st.markdown('The ' + auth_name_dict[user_id] + ' is set to 1 budget unit for the first round \n'
                                                        'you will get a chance to increase it in the next rounds')
+    else:
+        st.info('We are waiting to hear from our government officials about the tax rate')
 
-    elif user_id == 'LEF':
+def taxes_section():
+    auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
+    def pay_tax(user_id):
+        df_v = get_sql('frc_long_variables')
+        df_v.set_index('board', inplace=True)
+        curA = conn.cursor()
+        tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
+        st.write(tax_total)
+        curA.execute(update_tax,(int(round),True,tax_total,user_id))
+        curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
+        curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
+        curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
+        conn.commit()
+        with st.spinner('Depositing taxes'):
+            time.sleep(2)
+        st.success('You payed your taxes :)')
+        time.sleep(2)
+        st.experimental_rerun()
+
+
+
+
+    if user_id == 'LEF':
         st.header('Taxes')
         st.markdown('You live outside of Hydroson therefore you do not need to pay taxes')
 
@@ -372,21 +375,15 @@ def voting():
                         official.append(o)
                         vote_round.append(r)
         df_vote_result = pd.DataFrame(zip(vote,official,vote_round),columns=['Votes','Official','Game round'])
-        st.dataframe(df_vote_result)
         sns.set_theme(style='darkgrid',palette='colorblind')
         fig = sns.catplot(data=df_vote_result,x='Votes',col='Official',kind='count',row='Game round')
         st.pyplot(fig)
-
-
 
     else:
         st.write('awaiting results')
 
 
-
-voting()
-
-dict_phase_case = {0:taxes_section, 1: bidding_section, 2:transaction_section, 4:None,5:None}
+dict_phase_case = {0:tax_increacse_section ,1:taxes_section, 2: bidding_section, 3:transaction_section, 4:None, 5:voting}
 
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
