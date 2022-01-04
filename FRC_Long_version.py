@@ -225,7 +225,7 @@ def bidding_section():
 
         else:
             cur = conn.cursor()
-            cur.execute(update_bid_role,(round,measure,round,amount,user_id))
+            cur.execute(update_bid_role,(int(round),measure,int(round),amount,user_id))
             cur.execute(update_bid_measure, (user_id, amount, measure))
             if df.loc[user_id,'r1_measure'] == None:
                 cur.execute(log_bid,('New',user_dict[user_id],amount,measure))
