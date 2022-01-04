@@ -6,7 +6,7 @@ import pytz
 import streamlit.components.v1 as components
 import seaborn as sns
 
-st.set_page_config(layout='wide') #set streamlit page to wide mode
+st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='Logo 800x800 px.png') #set streamlit page to wide mode
 
 def refresh():
     st.experimental_rerun()
@@ -93,7 +93,7 @@ df_m.set_index('measure_id',inplace=True)
 
 
 with st.expander('Miro board', expanded=True):
-    components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994",height=740)
+    components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994&embedAutoplay=true",height=740)
 
 
 st.header('Your budget')
@@ -238,8 +238,6 @@ def bidding_section():
             time.sleep(2)
             st.experimental_rerun()
 
-
-    st.markdown("""___""")
     st.header('Biding on features')
     col1_f, col2_f, col3_f = st.columns(3)
 
@@ -271,13 +269,16 @@ def bidding_section():
                 biders = list(df[df['r' + str(round) + '_measure'] == measure].index)
                 amounts = df[df['r' + str(round) + '_measure'] == measure]['r' + str(round) + '_bid'].to_list()
                 st.caption('Biders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(biders, amounts)]))
-                st.progress(int(sum([int(i) for i in df[df['r' + str(round) + '_measure'] == measure][
-                    'r' + str(round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
+                try:
+                    st.progress(int(sum([int(i) for i in df[df['r' + str(round) + '_measure'] == measure][
+                        'r' + str(round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
+                except:
+                    st.warning('The bid on this measure have exceeded the cost')
 
 
 
 def transaction_section():
-
+    st.markdown("""___""")
 
     def money_transfer(amount,r_party):
         curA = conn.cursor()
@@ -288,7 +289,7 @@ def transaction_section():
         curA.execute(log_transaction,(user_dict[user_id],amount,r_party))
         conn.commit()
 
-    st.markdown("""___""")
+
     st.header("Money Transfer")
     col1 , col2, col3, col4 = st.columns(4)
     with col1:
@@ -391,8 +392,9 @@ dict_phase_case = {0:tax_increacse_section ,1:taxes_section, 2: bidding_section,
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
 
-insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
+
 #function for buying insurance
+insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
 def insure_me(user, action):
     cur = conn.cursor()
     cur.execute(insurance_update,(int(round),action,user))
