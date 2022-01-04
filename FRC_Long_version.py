@@ -193,11 +193,11 @@ def taxes_section():
             st.markdown('Please settle your taxes before going forward')
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric(label='Municipal tax',value=df_v.loc[board,'municipal_tax'])
+                st.metric(label='Municipal tax',value=int(df_v.loc[board,'municipal_tax']))
             with col2:
-                st.metric(label='Provincial tax',value=df_v.loc[board,'provincial_tax'])
+                st.metric(label='Provincial tax',value=int(df_v.loc[board,'provincial_tax']))
             with col3:
-                st.metric(label='Federal_tax', value=df_v.loc[board,'federal_tax'])
+                st.metric(label='Federal_tax', value=int(df_v.loc[board,'federal_tax']))
 
             tax = st.button(label='Pay taxes')
             if tax:
@@ -422,7 +422,7 @@ with st.sidebar:
         with col1:
             insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
         with col2:
-            st.metric(label='Current Price', value=df_v.loc[board,'insurance_price'])
+            st.metric(label='Current Price', value=int(df_v.loc[board,'insurance_price']))
     else:
         st.header('Flood insurance')
         if not df.loc[user_id,'r'+str(round)+'_insurance']:
