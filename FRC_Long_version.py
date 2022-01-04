@@ -127,6 +127,7 @@ update_delta =  ("UPDATE budget_lb1 SET delta = %s WHERE role=%s;")
 log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
 
 def tax_increacse_section():
+    st.markdown("""___""")
     auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
     def tax_increase(authority, increment):
         # sql query for tax increase
@@ -162,6 +163,7 @@ def tax_increacse_section():
         st.info('We are waiting to hear from our government officials about the tax rate')
 
 def taxes_section():
+    st.markdown("""___""")
     auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
     def pay_tax(user_id):
         df_v = get_sql('frc_long_variables')
@@ -208,6 +210,7 @@ def taxes_section():
 
 
 def bidding_section():
+    st.markdown("""___""")
     def make_bid_func(measure, amount):
         df = get_sql('budget_lb1')
         df.set_index('role',inplace=True)
@@ -414,6 +417,7 @@ def insure_me(user, action):
 
 
 #Insurance section sidebar
+st.markdown("""___""")
 with st.sidebar:
     if user_id =='I':
         st.header('Insurance deals')
