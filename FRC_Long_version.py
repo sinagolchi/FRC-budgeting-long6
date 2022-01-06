@@ -5,6 +5,7 @@ import time
 import pytz
 import streamlit.components.v1 as components
 import seaborn as sns
+from streamlit.callbacks.callbacks import rerun ,periodic
 
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='Logo 800x800 px.png') #set streamlit page to wide mode
 
@@ -55,6 +56,8 @@ with st.expander('Developer tools'):
 
 st.title('FRC Game companion WebApp')
 st.caption('Developed by Sina Golchi with collaboration with FRC Team under creative commons license')
+
+
 
 #sidebar and login system
 with st.sidebar:
@@ -185,9 +188,9 @@ def taxes_section():
 
 
 
-    if user_id == 'LEF':
+    if user_id == 'LEF' or user_id == 'M' or user_id == 'PP' or user_id == 'FF':
         st.header('Taxes')
-        st.markdown('You live outside of Hydroson therefore you do not need to pay taxes')
+        st.info('You are not obligated to pay taxes')
 
     else:
         st.header('Taxes')
@@ -447,3 +450,4 @@ with st.sidebar:
             if cancel_policy:
                 insure_me(user_id,False)
 
+periodic(30,rerun)
