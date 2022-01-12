@@ -5,7 +5,6 @@ import time
 import pytz
 import streamlit.components.v1 as components
 import seaborn as sns
-from streamlit.callbacks.callbacks import rerun ,periodic
 
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='Logo 800x800 px.png') #set streamlit page to wide mode
 
@@ -390,7 +389,32 @@ def voting():
         st.write('awaiting results')
 
 
-dict_phase_case = {0:tax_increacse_section ,1:taxes_section, 2: bidding_section, 3:transaction_section, 4:None, 5:voting}
+def flood():
+    qulified_for_DRP = ['CRA-HV','CRA-MV','CRA-MHA','ENGO','F']
+    st.markdown('''___''')
+    st.header('Flood event')
+    st.info(str(df_v.loc[board,'floods'][round-1]) + ' is in effect')
+    st.subheader('Damage analysis')
+    if df.loc[user_id,'r'+str(round) +'_flood'][0] is not None:
+        st.warning('You are affected by the flood')
+        if df.loc[user_id,'r'+str(round) +'_flood'][1]=='true':
+            st.success('You were protected by the measures in place')
+        else:
+            st.warning('You were not protected by the measures in place')
+            if not df.loc[user_id,'r'+str(round)+'_insurance']:
+                st.warning('Unfortunately, you were not insured for this round')
+                if user_id in qulified_for_DRP:
+                    st.success('You are eligible for DRP rebate of 3 budget units, admin will process your rebate')
+                else:
+                    st.warning('Unfortunately you are not eligible for DRP')
+            else:
+                st.success('You were insured for this round, you will receive 3/4 of the total damge. The admin will process your claim')
+
+    else:
+        st.success('You are not affected by the flood')
+
+
+dict_phase_case = {0:tax_increacse_section ,1:taxes_section, 2: bidding_section, 3:transaction_section, 4:flood, 5:voting}
 
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
@@ -424,30 +448,36 @@ def insure_me(user, action):
 #Insurance section sidebar
 st.markdown("""___""")
 with st.sidebar:
-    if user_id =='I':
-        st.header('Insurance deals')
-        slogan = st.text_input(label='Set your slogan for selling insurance', value=df_v.loc[board,'insurance_slogan'])
-        col1, col2 = st.columns(2)
-        with col1:
-            insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
-        with col2:
-            st.metric(label='Current Price', value=int(df_v.loc[board,'insurance_price']))
-    else:
-        st.header('Flood insurance')
-        if not df.loc[user_id,'r'+str(round)+'_insurance']:
-            st.warning('You are not insured for round ' + str(round))
-            st.subheader('Would you like to purchase insurance?')
+    if int(df_v.loc[board, 'phase']) <= 3:
+        if user_id =='I':
+            st.header('Insurance deals')
+            slogan = st.text_input(label='Set your slogan for selling insurance', value=df_v.loc[board,'insurance_slogan'])
             col1, col2 = st.columns(2)
             with col1:
-                insure = st.button(label='Buy insurance')
+                insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
             with col2:
-                st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
-            if insure:
-                insure_me(user_id, True)
+                st.metric(label='Current Price', value=int(df_v.loc[board,'insurance_price']))
+        else:
+            st.header('Flood insurance')
+            if not df.loc[user_id,'r'+str(round)+'_insurance']:
+                st.warning('You are not insured for round ' + str(round))
+                st.subheader('Would you like to purchase insurance?')
+                col1, col2 = st.columns(2)
+                with col1:
+                    insure = st.button(label='Buy insurance')
+                with col2:
+                    st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
+                if insure:
+                    insure_me(user_id, True)
+            else:
+                st.success('your property is insured for round ' + str(round))
+                cancel_policy = st.button(label='Cancel policy')
+                if cancel_policy:
+                    insure_me(user_id,False)
+    else:
+        if not df.loc[user_id, 'r' + str(round) + '_insurance']:
+            st.warning('You are not insured for round ' + str(round))
+            st.info('You can no longer purchase insurance for this round')
         else:
             st.success('your property is insured for round ' + str(round))
-            cancel_policy = st.button(label='Cancel policy')
-            if cancel_policy:
-                insure_me(user_id,False)
-
-periodic(30,rerun)
+            st.info('You can no longer cancel your insurance for this round')
