@@ -71,8 +71,9 @@ with st.sidebar:
         st.metric(label='Game Round', value=int(df_v.loc[board,'round']))
     with col2:
         st.metric(label='Game Phase', value=int(df_v.loc[board, 'phase']))
-    st.button(label='Refresh Data',on_click=refresh)
-
+    confirm_rerun = st.button(label='Refresh Data')
+    if confirm_rerun:
+        refresh()
 
 try:
     st.header("Your role is: " + str(user_dict[user_id]) + " on board " + str(board))
@@ -168,40 +169,95 @@ def taxes_section():
     st.markdown("""___""")
     auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
     def pay_tax(user_id):
-        df_v = get_sql('frc_long_variables')
-        df_v.set_index('board', inplace=True)
-        curA = conn.cursor()
-        tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
-        st.write(tax_total)
-        curA.execute(update_tax,(int(round),True,tax_total,user_id))
-        curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
-        curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
-        curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
-        conn.commit()
-        with st.spinner('Depositing taxes'):
+        if user_id == 'FN':
+            df_v = get_sql('frc_long_variables')
+            df_v.set_index('board', inplace=True)
+            curA = conn.cursor()
+            tax_total = int(df_v.loc[board, 'provincial_tax'])
+            curA.execute(update_tax, (int(round), True, tax_total, user_id))
+            curA.execute(update_taxman, (int(df_v.loc[board, 'provincial_tax']), 'PP'))
+            conn.commit()
+            with st.spinner('Depositing taxes'):
+                time.sleep(2)
+            st.success('You payed your taxes :)')
             time.sleep(2)
-        st.success('You payed your taxes :)')
-        time.sleep(2)
+            st.experimental_rerun()
+
+        elif user_id == 'I' or user_id == 'LD' or user_id== 'J' or user_id == 'LEF':
+            None
+
+        else:
+            df_v = get_sql('frc_long_variables')
+            df_v.set_index('board', inplace=True)
+            curA = conn.cursor()
+            tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
+            curA.execute(update_tax,(int(round),True,tax_total,user_id))
+            curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
+            curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
+            curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
+            conn.commit()
+            with st.spinner('Depositing taxes'):
+                time.sleep(2)
+            st.success('You payed your taxes :)')
+            time.sleep(2)
+            st.experimental_rerun()
+
+    def process_m_p(user,amount,receiving_party):
+        curA = conn.cursor()
+        curA.execute('UPDATE budget_lb%s SET cb=cb-%s WHERE role=%s',(int(board),amount,user))
+        curA.execute('UPDATE budget_lb%s SET cb=cb+%s WHERE role=%s',(int(board),amount,receiving_party))
+        conn.commit()
+        with st.spinner('processing payment to ' + receiving_party):
+            time.sleep(1)
+        st.success('Payment processed')
+
+    def process_m_c(user,amount):
+        curA = conn.cursor()
+        curA.execute('UPDATE budget_lb%s SET cb=cb-%s WHERE role=%s',(int(board),amount,user))
+        conn.commit()
+        with st.spinner('processing payment for the cost'):
+            time.sleep(1)
+        st.success('Payment processed')
+
+    def set_as_paid(user):
+        curA = conn.cursor()
+        curA.execute('UPDATE budget_lb%s SET r%s_m_payment=%s WHERE role=%s',(int(board),int(round),True,user))
+        conn.commit()
+        st.success('All payments were successful! :)')
+        time.sleep(1)
         st.experimental_rerun()
 
-
-
-
-    if user_id == 'LEF' or user_id == 'M' or user_id == 'PP' or user_id == 'FF':
+    if  user_id == 'M' or user_id == 'PP' or user_id == 'FF' or user_id == 'EM' or user_id == 'DP' or user_id == 'PH' or user_id == 'TA' or user_id == 'WW':
         st.header('Taxes')
         st.info('You are not obligated to pay taxes')
 
-    else:
+
+    elif user_id == 'FN':
         st.header('Taxes')
         if not df.loc[user_id,'r' + str(round) + '_tax']:
             st.markdown('Please settle your taxes before going forward')
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric(label='Municipal tax',value=int(df_v.loc[board,'municipal_tax']))
+                st.metric(label='Provincial tax', value=int(df_v.loc[board, 'provincial_tax']))
             with col2:
-                st.metric(label='Provincial tax',value=int(df_v.loc[board,'provincial_tax']))
+                tax = st.button(label='Pay taxes')
+
+            if tax:
+                pay_tax(user_id)
+        else:
+            st.success('Your taxes are settled for this round')
+
+    else:
+        st.header('Taxes')
+        if not df.loc[user_id, 'r' + str(round) + '_tax']:
+            st.markdown('Please settle your taxes before going forward')
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label='Municipal tax', value=int(df_v.loc[board, 'municipal_tax']))
+            with col2:
+                st.metric(label='Provincial tax', value=int(df_v.loc[board, 'provincial_tax']))
             with col3:
-                st.metric(label='Federal_tax', value=int(df_v.loc[board,'federal_tax']))
+                st.metric(label='Federal_tax', value=int(df_v.loc[board, 'federal_tax']))
 
             tax = st.button(label='Pay taxes')
             if tax:
@@ -209,7 +265,170 @@ def taxes_section():
         else:
             st.success('Your taxes are settled for this round')
 
+    st.markdown('''---''')
+    st.subheader('Additional mandatory payments')
 
+    if df.loc[user_id,'r'+str(round)+'_m_payment']:
+        st.success('your mandatory payments are settled for this round')
+
+    else:
+        if user_id == 'DP' or user_id == 'EM' or user_id == 'PH':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            with col2:
+                st.metric(label='Cost of running the department', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']),'PUC')
+                process_m_c(user_id, 2)
+                set_as_paid(user_id)
+
+
+        elif user_id == 'ENGO':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            with col2:
+                st.metric(label='Cost of running the department', value=1)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
+                process_m_c(user_id, 1)
+                set_as_paid(user_id)
+
+        elif user_id == 'FP':
+            st.metric(label='Cost of running the government',value=15)
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_c(user_id, 15)
+                set_as_paid(user_id)
+            st.subheader('Ocasional costs')
+            st.info('You are required to provide additional funding to First Nations if they exprience a flood')
+            st.info(
+                'You are required to provide up to 10 budget unit as DRP to provincial govenrment if residence are eligible for DRP')
+
+        elif user_id == 'I':
+            st.info(
+                'You should not spend more than 3/4 of your initial budget per round on FRM measures and keep 1/4 in reserve')
+
+        elif user_id == 'J':
+            st.info('There is no additional cost to your role')
+
+        elif user_id == 'LD':
+            st.metric(label='Mendatory payement to medium value residents (CRA-MV)', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, 2, 'CRA-MV')
+                set_as_paid(user_id)
+
+        elif user_id == 'LEF':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            with col2:
+                st.metric(label='Mandatory payment to high value residents (CRA-HV)', value=3)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
+                process_m_p(user_id, 3, 'CRA-HV')
+                set_as_paid(user_id)
+
+            st.subheader('Ocasional costs')
+            st.info('You must pay 2 budget units to ENGO for compensation per each structural measure')
+
+        elif user_id == 'LBO':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            with col2:
+                st.metric(label='Mandatory payment to mobile home residents (CRA-MHA)', value=1)
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
+                process_m_p(user_id, 1, 'CRA-MHA')
+                set_as_paid(user_id)
+
+        elif user_id == 'M':
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            with col2:
+                st.metric(label='Cost of running the government', value=1)
+            with col3:
+                st.metric(label='Cost of running treatment facilities', value=2)
+            with col4:
+                st.metric(label='Cost of running emergency services', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
+                process_m_c(user_id, 1)
+                process_m_p(user_id, 2, 'WW')
+                process_m_p(user_id, 2, 'EM')
+                set_as_paid(user_id)
+
+        elif user_id == 'PUC':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Cost of maintaining the substations',value=2)
+            with col2:
+                st.metric(label='Cost of running the company', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_c(user_id, 2)
+                process_m_c(user_id, 2)
+                set_as_paid(user_id)
+
+        elif user_id == 'PP':
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label='Cost of running the government',value=6)
+            with col2:
+                st.metric(label='Mandatory payment to hydrologist',value=2)
+            with col3:
+                st.metric(label='Mandetory payment to transport authority', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_c(user_id, 6)
+                process_m_p(user_id, 2,'PH')
+                process_m_p(user_id,2,'TA')
+                set_as_paid(user_id)
+
+        elif user_id == 'TA':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Cost of running the department', value=2)
+            with col2:
+                st.metric(label='Mandatory payment to engineering firm for maintenance', value=1)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_c(user_id, 2)
+                process_m_p(user_id, 1, 'LEF')
+                set_as_paid(user_id)
+
+        elif user_id == 'WW':
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(label='Cost of running the department', value=2)
+            with col2:
+                st.metric(label='Mandatory payment to engineering firm for maintenance', value=2)
+
+            confirm_m_payment = st.button(label='Process mandatory payments')
+            if confirm_m_payment:
+                process_m_c(user_id, 2)
+                process_m_p(user_id, 2, 'LEF')
+                set_as_paid(user_id)
+
+        else:
+            st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
 
 def bidding_section():
     st.markdown("""___""")
@@ -270,7 +489,7 @@ def bidding_section():
             with col2:
                 biders = list(df[df['r' + str(round) + '_measure'] == measure].index)
                 amounts = df[df['r' + str(round) + '_measure'] == measure]['r' + str(round) + '_bid'].to_list()
-                st.caption('Biders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(biders, amounts)]))
+                st.caption('Bidders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(biders, amounts)]))
                 try:
                     st.progress(int(sum([int(i) for i in df[df['r' + str(round) + '_measure'] == measure][
                         'r' + str(round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
