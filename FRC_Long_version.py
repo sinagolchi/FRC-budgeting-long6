@@ -318,7 +318,7 @@ def taxes_section():
             st.info('There is no additional cost to your role')
 
         elif user_id == 'LD':
-            st.metric(label='Mendatory payement to medium value residents (CRA-MV)', value=2)
+            st.metric(label='Mandatory payement to medium value residents (CRA-MV)', value=2)
 
             confirm_m_payment = st.button(label='Process mandatory payments')
             if confirm_m_payment:
