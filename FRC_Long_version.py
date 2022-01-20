@@ -184,7 +184,19 @@ def taxes_section():
             st.experimental_rerun()
 
         elif user_id == 'I' or user_id == 'LD' or user_id== 'J' or user_id == 'LEF':
-            None
+            df_v = get_sql('frc_long_variables')
+            df_v.set_index('board', inplace=True)
+            curA = conn.cursor()
+            tax_total = int(df_v.loc[board, 'provincial_tax'] + df_v.loc[board, 'federal_tax'])
+            curA.execute(update_tax, (int(round), True, tax_total, user_id))
+            curA.execute(update_taxman, (int(df_v.loc[board, 'provincial_tax']), 'PP'))
+            curA.execute(update_taxman, (int(df_v.loc[board, 'federal_tax']), 'FP'))
+            conn.commit()
+            with st.spinner('Depositing taxes'):
+                time.sleep(2)
+            st.success('You payed your taxes :)')
+            time.sleep(2)
+            st.experimental_rerun()
 
         else:
             df_v = get_sql('frc_long_variables')
@@ -227,7 +239,7 @@ def taxes_section():
         time.sleep(1)
         st.experimental_rerun()
 
-    if  user_id == 'M' or user_id == 'PP' or user_id == 'FF' or user_id == 'EM' or user_id == 'DP' or user_id == 'PH' or user_id == 'TA' or user_id == 'WW':
+    if  user_id == 'M' or user_id == 'PP' or user_id == 'FP' or user_id == 'EM' or user_id == 'DP' or user_id == 'PH' or user_id == 'TA' or user_id == 'WW' or user_id == 'EM':
         st.header('Taxes')
         st.info('You are not obligated to pay taxes')
 
@@ -240,6 +252,23 @@ def taxes_section():
             with col1:
                 st.metric(label='Provincial tax', value=int(df_v.loc[board, 'provincial_tax']))
             with col2:
+                tax = st.button(label='Pay taxes')
+
+            if tax:
+                pay_tax(user_id)
+        else:
+            st.success('Your taxes are settled for this round')
+
+    elif user_id == 'I' or user_id == 'J' or user_id == 'LD' or user_id == 'LEF':
+        st.header('Taxes')
+        if not df.loc[user_id, 'r' + str(round) + '_tax']:
+            st.markdown('Please settle your taxes before going forward')
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label='Provincial tax', value=int(df_v.loc[board, 'provincial_tax']))
+            with col2:
+                st.metric(label='Federal_tax', value=int(df_v.loc[board, 'federal_tax']))
+            with col3:
                 tax = st.button(label='Pay taxes')
 
             if tax:
@@ -429,6 +458,8 @@ def taxes_section():
 
         else:
             st.metric(label='Utility', value=int(df_v.loc[board, 'power_price']))
+            if confirm_m_payment:
+                process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
 
 def bidding_section():
     st.markdown("""___""")
