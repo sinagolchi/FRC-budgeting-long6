@@ -76,21 +76,24 @@ with st.sidebar:
     if user_roster.loc[user_name,'level'] > 1:
         board = st.selectbox(label='FRC Board number', options=[1, 2, 3, 4, 5])
         user_id = user_dict_inv[st.selectbox(label='Role', options=user_dict.values())]
-        df = get_sql('budget_lb' + str(board))
-        df.set_index('role', inplace=True)
-        df_m = get_sql('measures_lb1')
-        df_m.set_index('measure_id', inplace=True)
-        df_v = get_sql('frc_long_variables')
-        df_v.set_index('board', inplace=True)
-        g_round = df_v.loc[board, 'round']
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric(label='Game Round', value=int(df_v.loc[board, 'round']))
-        with col2:
-            st.metric(label='Game Phase', value=phase_dict[df_v.loc[board, 'phase']])
-        confirm_rerun = st.button(label='Refresh Data')
-        if confirm_rerun:
-            refresh()
+    else:
+        board = int(user_roster.loc[user_name,'board'])
+        user_id = user_roster.loc[user_name,'role']
+    df = get_sql('budget_lb' + str(board))
+    df.set_index('role', inplace=True)
+    df_m = get_sql('measures_lb1')
+    df_m.set_index('measure_id', inplace=True)
+    df_v = get_sql('frc_long_variables')
+    df_v.set_index('board', inplace=True)
+    g_round = df_v.loc[board, 'round']
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(label='Game Round', value=int(df_v.loc[board, 'round']))
+    with col2:
+        st.metric(label='Game Phase', value=int(df_v.loc[board, 'phase']))
+    confirm_rerun = st.button(label='Refresh Data')
+    if confirm_rerun:
+        refresh()
 
 st.header("Your role is: " + str(user_dict[user_id]) + " on board " + str(board))
 
@@ -128,6 +131,7 @@ log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
 
 def tax_increacse_section():
     st.markdown("""___""")
+
     auth_name_dict = {'PP': 'provincial tax', 'FP': 'federal tax', 'M': 'municipal tax'}
     def tax_increase(authority, increment):
         # sql query for tax increase
@@ -145,6 +149,13 @@ def tax_increacse_section():
 
     if ((user_id == 'PP' or user_id=='M') or user_id =='FP') and g_round != 1:
         st.header("Determine tax rate for this round")
+        with st.expander('help'):
+            st.markdown(
+                '### Tax increase \n This section is reserved for government officials to decide if they want to increase taxt \n'
+                'here are some of the rules:\n'
+                '- The tax cannot be increased on the first round from the starting one buddget unit per round\n'
+                '- The tax rate for each government official can only increase by one unit per round\n'
+                '- Be fare while increasing tax, remember that people and organizations can vote in favor or against you at the end of each round')
         st.markdown('You can increase ' +  auth_name_dict[user_id] +' by the amount below:')
         col1 , col2 = st.columns(2)
         with col1:
@@ -157,6 +168,13 @@ def tax_increacse_section():
 
     elif ((user_id == 'PP' or user_id=='M') or user_id =='FP') and g_round == 1:
         st.header("Determine tax rate for this round")
+        with st.expander('help'):
+            st.markdown(
+                '### Tax increase \n This section is reserved for government officials to decide if they want to increase taxt \n'
+                'here are some of the rules:\n'
+                '- The tax cannot be increased on the first round from the starting one buddget unit per round\n'
+                '- The tax rate for each government official can only increase by one unit per round\n'
+                '- Be fare while increasing tax, remember that people and organizations can vote in favor or against you at the end of each round')
         st.markdown('The ' + auth_name_dict[user_id] + ' is set to 1 budget unit for the first round \n'
                                                        'you will get a chance to increase it in the next rounds')
     else:
@@ -488,7 +506,8 @@ def bidding_section():
             time.sleep(2)
             st.experimental_rerun()
 
-    st.header('Biding on features')
+
+    st.header('Bidding on features')
     col1_f, col2_f, col3_f = st.columns(3)
 
     with col1_f:
@@ -524,7 +543,9 @@ def bidding_section():
                         'r' + str(g_round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
                 except:
                     st.warning('The bid on this measure have exceeded the cost')
-
+    confirm_rerun = st.button(label='Refresh Data',key='bidding section')
+    if confirm_rerun:
+        refresh()
 
 
 def transaction_section():
@@ -584,7 +605,7 @@ def transaction_section():
 #Voting section
 
 update_vote_DB = ("UPDATE budget_lb1 SET r%s_vote=ARRAY[%s,%s,%s] WHERE role=%s;")
-vote_override = True
+vote_override = df_v.loc[board,'r'+str(g_round)+'_vote_override']
 
 def voting():
     df = get_sql('budget_lb1')
@@ -634,7 +655,7 @@ def voting():
         st.pyplot(fig)
 
     else:
-        st.write('awaiting results')
+        st.info('Awaiting results')
 
 
 def flood():
@@ -652,7 +673,7 @@ def flood():
             if not df.loc[user_id,'r'+str(g_round)+'_insurance']:
                 st.warning('Unfortunately, you were not insured for this round')
                 if user_id in qulified_for_DRP:
-                    st.success('You are eligible for DRP rebate of 3 budget units, admin will process your rebate')
+                    st.success('You are eligible for DRP rebate of 3 budget units, ask provincial politician for rebate')
                 else:
                     st.warning('Unfortunately you are not eligible for DRP')
             else:
@@ -667,6 +688,18 @@ dict_phase_case = {0:tax_increacse_section ,1:taxes_section, 2: bidding_section,
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
 
+if user_id == 'PH':
+    with st.expander('Possible flood maps'):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.image('imgs/Convective summer storm.png')
+            st.image('imgs/Freshet spring flooding.png')
+        with col2:
+            st.image('imgs/Ice-jams-winter-flodding.png')
+            st.image('imgs/Minor localized flooding (1).png')
+        with col3:
+            st.image('imgs/SLR test.png')
+            st.image('imgs/Storm surge winter flooding.png')
 
 #function for buying insurance
 insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
@@ -694,8 +727,9 @@ def insure_me(user, action):
 
 
 #Insurance section sidebar
-st.markdown("""___""")
+
 with st.sidebar:
+    st.markdown("""___""")
     if int(df_v.loc[board, 'phase']) <= 3:
         if user_id =='I':
             st.header('Insurance deals')
@@ -729,6 +763,8 @@ with st.sidebar:
         else:
             st.success('your property is insured for round ' + str(g_round))
             st.info('You can no longer cancel your insurance for this round')
-
+st.markdown('''---''')
 with st.expander('Miro board', expanded=True):
-    components.iframe("https://miro.com/app/live-embed/o9J_lkWhwDI=/?moveToViewport=-21661,-13530,50917,24994&embedAutoplay=true",height=740)
+    components.iframe("https://miro.com/app/live-embed/uXjVOV_4o7o=/?moveToViewport=-23729,-4127,35785,17566&embedAutoplay=true",height=740)
+
+    st.write("Open board in a new tab [link](https://miro.com/app/board/uXjVOV_4o7o=/?invite_link_id=620862911939)")
