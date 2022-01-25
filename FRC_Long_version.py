@@ -35,7 +35,7 @@ user_dict = {
 }
 user_dict_inv= {v:k for k,v in user_dict.items()}
 
-phase_dict = {0: 'Adjusting tax rate (for government only)', 1: 'Taxes', 2: 'Bidding on features', 3: 'Transactions', 4: 'Flood and damage analysis', 5: 'Vote'}
+phase_dict = {0: 'Adjusting tax rate (for government only)', 1: 'Phase 3: Updating Budget', 2: 'Phase 1A: FRM Measure bidding', 3: 'Phase 1B: Transactions', 4: 'Phase 2: Flood and damage analysis', 5: 'Phase 4: Vote'}
 
 def init_connection():
     return psycopg2.connect(**st.secrets["postgres"])
@@ -57,7 +57,7 @@ st.caption('Developed by Sina Golchi with collaboration with FRC Team under crea
 #sidebar and login system
 with st.sidebar:
     st.write('Please Login below:')
-    user_name = st.text_input('Your unique FRC ID')
+    user_name = st.text_input('Your unique FRC ID',type='password')
     user_roster = get_sql('frc_users')
     user_roster.set_index('user',inplace=True)
 try:
@@ -86,11 +86,11 @@ with st.sidebar:
     df_v = get_sql('frc_long_variables')
     df_v.set_index('board', inplace=True)
     g_round = df_v.loc[board, 'round']
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label='Game Round', value=int(df_v.loc[board, 'round']))
-    with col2:
-        st.metric(label='Game Phase', value=int(df_v.loc[board, 'phase']))
+
+    st.caption('Game round')
+    st.info('We are on round '+str(int(df_v.loc[board, 'round'])))
+    st.caption('Game phase')
+    st.info(phase_dict[df_v.loc[board, 'phase']])
     confirm_rerun = st.button(label='Refresh Data')
     if confirm_rerun:
         refresh()
@@ -349,10 +349,10 @@ def taxes_section():
             if confirm_m_payment:
                 process_m_c(user_id, 15)
                 set_as_paid(user_id)
-            st.subheader('Ocasional costs')
+            st.subheader('Occasional costs')
             st.info('You are required to provide additional funding to First Nations if they exprience a flood')
             st.info(
-                'You are required to provide up to 10 budget unit as DRP to provincial govenrment if residence are eligible for DRP')
+                'You are required to provide funding (DFAA) to provincial govenrment, so that the province can pay flood victims DRP')
 
         elif user_id == 'I':
             st.info(
@@ -382,7 +382,7 @@ def taxes_section():
                 process_m_p(user_id, 3, 'CRA-HV')
                 set_as_paid(user_id)
 
-            st.subheader('Ocasional costs')
+            st.subheader('Occasional costs')
             st.info('You must pay 2 budget units to ENGO for compensation per each structural measure')
 
         elif user_id == 'LBO':
@@ -507,7 +507,7 @@ def bidding_section():
             st.experimental_rerun()
 
 
-    st.header('Bidding on features')
+    st.header('Phase 1a: FRM Measures Bidding')
     col1_f, col2_f, col3_f = st.columns(3)
 
     with col1_f:
@@ -561,7 +561,7 @@ def transaction_section():
         conn.commit()
 
 
-    st.header("Money Transfer")
+    st.header("Phase 1B: Transactions")
     col1 , col2, col3, col4 = st.columns(4)
     with col1:
         t_amount = st.number_input(value=0, label='Budget to transfer',min_value=0)
@@ -593,7 +593,7 @@ def transaction_section():
 
 
     with st.expander("Transaction summary"):
-        df_p_log = pd.read_sql("SELECT * from payment;", conn)
+        df_p_log = pd.read_sql("SELECT * from payment1;", conn)
         est = pytz.timezone('EST')
         df_p_log = df_p_log.rename(
             columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
