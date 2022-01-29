@@ -115,19 +115,19 @@ with st.expander('Participants budgets'):
 
 
 #sql queries for bidding
-update_bid_measure = ("UPDATE measures_lb1 SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
-update_bid_role =  ("UPDATE budget_lb1 SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
-log_bid = ("INSERT INTO measure_log VALUES (NOW(),%s,%s,%s,%s);")
+update_bid_measure = ("UPDATE measures_lb%s SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
+update_bid_role =  ("UPDATE budget_lb%s SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
+log_bid = ("INSERT INTO measure_log%s VALUES (NOW(),%s,%s,%s,%s);")
 
 #sql queries for taxes
-update_tax =  ("UPDATE budget_lb1 SET r%s_tax = %s, cb = cb - %s WHERE role=%s;")
-update_taxman = ("UPDATE budget_lb1 SET cb = cb + %s WHERE role=%s;")
+update_tax =  ("UPDATE budget_lb%s SET r%s_tax = %s, cb = cb - %s WHERE role=%s;")
+update_taxman = ("UPDATE budget_lb%s SET cb = cb + %s WHERE role=%s;")
 
 
 #SQL queries for budget manipulation
-update_budget = ("UPDATE budget_lb1 SET cb = %s WHERE role=%s;")
-update_delta =  ("UPDATE budget_lb1 SET delta = %s WHERE role=%s;")
-log_transaction = ("INSERT INTO payment VALUES (NOW(),%s,%s,%s);")
+update_budget = ("UPDATE budget_lb%s SET cb = %s WHERE role=%s;")
+update_delta =  ("UPDATE budget_lb%s SET delta = %s WHERE role=%s;")
+log_transaction = ("INSERT INTO payment%s VALUES (NOW(),%s,%s,%s);")
 
 def tax_increacse_section():
     st.markdown("""___""")
@@ -189,8 +189,8 @@ def taxes_section():
             df_v.set_index('board', inplace=True)
             curA = conn.cursor()
             tax_total = int(df_v.loc[board, 'provincial_tax'])
-            curA.execute(update_tax, (int(g_round), True, tax_total, user_id))
-            curA.execute(update_taxman, (int(df_v.loc[board, 'provincial_tax']), 'PP'))
+            curA.execute(update_tax, (int(board),int(g_round), True, tax_total, user_id))
+            curA.execute(update_taxman, (int(board),int(df_v.loc[board, 'provincial_tax']), 'PP'))
             conn.commit()
             with st.spinner('Depositing taxes'):
                 time.sleep(2)
@@ -203,9 +203,9 @@ def taxes_section():
             df_v.set_index('board', inplace=True)
             curA = conn.cursor()
             tax_total = int(df_v.loc[board, 'provincial_tax'] + df_v.loc[board, 'federal_tax'])
-            curA.execute(update_tax, (int(g_round), True, tax_total, user_id))
-            curA.execute(update_taxman, (int(df_v.loc[board, 'provincial_tax']), 'PP'))
-            curA.execute(update_taxman, (int(df_v.loc[board, 'federal_tax']), 'FP'))
+            curA.execute(update_tax, (int(board), int(g_round), True, tax_total, user_id))
+            curA.execute(update_taxman, (int(board), int(df_v.loc[board, 'provincial_tax']), 'PP'))
+            curA.execute(update_taxman, (int(board), int(df_v.loc[board, 'federal_tax']), 'FP'))
             conn.commit()
             with st.spinner('Depositing taxes'):
                 time.sleep(2)
@@ -218,10 +218,10 @@ def taxes_section():
             df_v.set_index('board', inplace=True)
             curA = conn.cursor()
             tax_total = int(df_v.loc[board,'municipal_tax']+df_v.loc[board,'provincial_tax']+df_v.loc[board,'federal_tax'])
-            curA.execute(update_tax,(int(g_round),True,tax_total,user_id))
-            curA.execute(update_taxman, (int(df_v.loc[board,'municipal_tax']),'M'))
-            curA.execute(update_taxman, (int(df_v.loc[board,'provincial_tax']),'PP'))
-            curA.execute(update_taxman, (int(df_v.loc[board,'federal_tax']),'FP'))
+            curA.execute(update_tax,(int(board), int(g_round),True,tax_total,user_id))
+            curA.execute(update_taxman, (int(board), int(df_v.loc[board,'municipal_tax']),'M'))
+            curA.execute(update_taxman, (int(board), int(df_v.loc[board,'provincial_tax']),'PP'))
+            curA.execute(update_taxman, (int(board), int(df_v.loc[board,'federal_tax']),'FP'))
             conn.commit()
             with st.spinner('Depositing taxes'):
                 time.sleep(2)
@@ -480,7 +480,7 @@ def taxes_section():
 def bidding_section():
     st.markdown("""___""")
     def make_bid_func(measure, amount):
-        df = get_sql('budget_lb1')
+        df = get_sql('budget_lb' + str(int(board)))
         df.set_index('role',inplace=True)
         bid_total = sum([int(i) for i in df[df['r' + str(g_round) + '_measure'] == measure][
                         'r' + str(g_round) + '_bid'].to_list()])
@@ -493,12 +493,12 @@ def bidding_section():
 
         else:
             cur = conn.cursor()
-            cur.execute(update_bid_role,(int(g_round),measure,int(g_round),amount,user_id))
-            cur.execute(update_bid_measure, (user_id, amount, measure))
+            cur.execute(update_bid_role,(int(board),int(g_round),measure,int(g_round),amount,user_id))
+            cur.execute(update_bid_measure, (int(board), user_id, amount, measure))
             if df.loc[user_id,'r1_measure'] == None:
-                cur.execute(log_bid,('New',user_dict[user_id],amount,measure))
+                cur.execute(log_bid,(int(board),'New',user_dict[user_id],amount,measure))
             else:
-                cur.execute(log_bid,('Change', user_dict[user_id], amount, measure))
+                cur.execute(log_bid,(int(board),'Change', user_dict[user_id], amount, measure))
             conn.commit()
             with st.spinner('Registering your bid'):
                 time.sleep(3)
@@ -516,7 +516,7 @@ def bidding_section():
     with col2_f:
         if int(df_m.loc[bid_measure, 'cost']) != 0:
             st.metric(label='Cost of ' + bid_measure, value=int(df_m.loc[bid_measure, 'cost']))
-            bid_amount = st.number_input(value=1, label='how much you would like to bid?', min_value=1)
+            bid_amount = int(st.selectbox(label='how much you would like to bid?', options=[x for x in range(1,11)]))
         else:
             st.markdown('### The cost is covered by taxes')
 
@@ -553,20 +553,20 @@ def transaction_section():
 
     def money_transfer(amount,r_party):
         curA = conn.cursor()
-        curA.execute(update_budget,(int(df.loc[user_id,'cb'])-amount,user_id))
-        curA.execute(update_delta,(-amount,user_id))
-        curA.execute(update_budget,(int(df.loc[r_party,'cb']+amount),r_party))
-        curA.execute(update_delta,(+amount,r_party))
-        curA.execute(log_transaction,(user_dict[user_id],amount,r_party))
+        curA.execute(update_budget,(int(board), int(df.loc[user_id,'cb'])-amount,user_id))
+        curA.execute(update_delta,(int(board), -amount,user_id))
+        curA.execute(update_budget,(int(board), int(df.loc[r_party,'cb']+amount),r_party))
+        curA.execute(update_delta,(int(board), +amount,r_party))
+        curA.execute(log_transaction,(int(board) ,user_dict[user_id],amount,r_party))
         conn.commit()
 
 
     st.header("Phase 1B: Transactions")
     col1 , col2, col3, col4 = st.columns(4)
     with col1:
-        t_amount = st.number_input(value=0, label='Budget to transfer',min_value=0)
+        t_amount = int(st.selectbox(label='Budget to transfer',options=[x for x in range(1,10)]))
     with col2:
-        party = st.selectbox(options=[x for x in other_roles], label='Stakeholder receiving')
+        party = user_dict_inv[st.selectbox(options=[user_dict[x] for x in other_roles], label='Stakeholder receiving')]
     with col4:
         transfer = st.button(label='Complete transaction',help='Only click when you are absolutely sure')
     with col3:
@@ -582,7 +582,7 @@ def transaction_section():
 
     st.header('Summary')
     with st.expander("Bidding summary"):
-        df_m_log = pd.read_sql("SELECT * from measure_log;",conn)
+        df_m_log = get_sql('measure_log' + str(board))
         est = pytz.timezone('EST')
         df_m_log = df_m_log.rename(
             columns={'datetime': 'Timestamp', 'bid_type': 'Type of bid', 'person_biding': 'Role of bidder',
@@ -593,7 +593,7 @@ def transaction_section():
 
 
     with st.expander("Transaction summary"):
-        df_p_log = pd.read_sql("SELECT * from payment1;", conn)
+        df_p_log = get_sql('payment'+str(board))
         est = pytz.timezone('EST')
         df_p_log = df_p_log.rename(
             columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
@@ -602,13 +602,34 @@ def transaction_section():
             df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
             st.dataframe(df_p_log)
 
+    st.subheader('Measures suggested')
+    for measure in df_m.index.values:
+        if measure in df['r' + str(g_round) + '_measure'].to_list():
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.metric(label=measure,
+                          value=str(sum([int(i) for i in df[df['r' + str(g_round) + '_measure'] == measure][
+                              'r' + str(g_round) + '_bid'].to_list()])) + r"/" + str(int(df_m.loc[measure, 'cost'])))
+            with col2:
+                biders = list(df[df['r' + str(g_round) + '_measure'] == measure].index)
+                amounts = df[df['r' + str(g_round) + '_measure'] == measure]['r' + str(g_round) + '_bid'].to_list()
+                st.caption('Bidders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(biders, amounts)]))
+                try:
+                    st.progress(int(sum([int(i) for i in df[df['r' + str(g_round) + '_measure'] == measure][
+                        'r' + str(g_round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
+                except:
+                    st.warning('The bid on this measure have exceeded the cost')
+    confirm_rerun = st.button(label='Refresh Data', key='bidding section')
+    if confirm_rerun:
+        refresh()
+
 #Voting section
 
-update_vote_DB = ("UPDATE budget_lb1 SET r%s_vote=ARRAY[%s,%s,%s] WHERE role=%s;")
+update_vote_DB = ("UPDATE budget_lb%s SET r%s_vote=ARRAY[%s,%s,%s] WHERE role=%s;")
 vote_override = df_v.loc[board,'r'+str(g_round)+'_vote_override']
 
 def voting():
-    df = get_sql('budget_lb1')
+    df = get_sql('budget_lb' + str(board))
     df.set_index('role',inplace=True)
     st.header('Round ' + str(g_round) + ' vote of confidence')
     if df.loc[user_id,'r'+str(g_round)+'_vote'] is None:
@@ -664,12 +685,13 @@ def flood():
     st.header('Flood event')
     st.info(str(df_v.loc[board,'floods'][g_round-1]) + ' is in effect')
     st.subheader('Damage analysis')
-    if df.loc[user_id,'r'+str(g_round) +'_flood'][0] is not None:
+    if df.loc[user_id,'r'+str(g_round) +'_flood'] is not None:
         st.warning('You are affected by the flood')
-        if df.loc[user_id,'r'+str(g_round) +'_flood'][1]=='true':
+        if df.loc[user_id,'r'+str(g_round) +'_flood'][1]:
             st.success('You were protected by the measures in place')
         else:
             st.warning('You were not protected by the measures in place')
+            st.info('The total cost of damage to your property is: $' + str(df.loc[user_id,'r'+str(g_round) +'_flood'][2]))
             if not df.loc[user_id,'r'+str(g_round)+'_insurance']:
                 st.warning('Unfortunately, you were not insured for this round')
                 if user_id in qulified_for_DRP:
@@ -702,13 +724,13 @@ if user_id == 'PH':
             st.image('imgs/Storm surge winter flooding.png')
 
 #function for buying insurance
-insurance_update = ("UPDATE budget_lb1 SET r%s_insurance = %s WHERE role=%s;")
+insurance_update = ("UPDATE budget_lb%s SET r%s_insurance = %s WHERE role=%s;")
 def insure_me(user, action):
     cur = conn.cursor()
     cur.execute(insurance_update,(int(g_round),action,user))
     if action:
-        cur.execute(update_budget, (int(df.loc[user_id, 'cb']) - 1, user_id))
-        cur.execute(update_delta, (-1, user_id))
+        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) - 1, user_id))
+        cur.execute(update_delta, (int(board), -1, user_id))
         conn.commit()
         with st.spinner('Preparing your policy'):
             time.sleep(2)
@@ -716,8 +738,8 @@ def insure_me(user, action):
         time.sleep(2)
         st.experimental_rerun()
     else:
-        cur.execute(update_budget, (int(df.loc[user_id, 'cb']) + 1, user_id))
-        cur.execute(update_delta, (+1, user_id))
+        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) + 1, user_id))
+        cur.execute(update_delta, (int(board), +1, user_id))
         conn.commit()
         with st.spinner('Cancelling your policy'):
             time.sleep(2)
