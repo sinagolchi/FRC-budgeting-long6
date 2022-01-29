@@ -731,7 +731,7 @@ if user_id == 'PH':
 insurance_update = ("UPDATE budget_lb%s SET r%s_insurance = %s WHERE role=%s;")
 def insure_me(board,user, action):
     cur = conn.cursor()
-    cur.execute(insurance_update,(int(g_round),action,user))
+    cur.execute(insurance_update,(int(board),int(g_round),action,user))
     if action:
         cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) - 1, user_id))
         cur.execute(update_delta, (int(board), -1, user_id))
