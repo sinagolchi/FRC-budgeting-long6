@@ -639,7 +639,7 @@ def voting():
     if df.loc[user_id,'r'+str(g_round)+'_vote'] is None:
         def submit_vote(results, user):
             curA = conn.cursor()
-            curA.execute(update_vote_DB, (int(g_round), *results, user))
+            curA.execute(update_vote_DB, (int(board),int(g_round), *results, user))
             conn.commit()
             with st.spinner('submitting your vote'):
                 time.sleep(2)
