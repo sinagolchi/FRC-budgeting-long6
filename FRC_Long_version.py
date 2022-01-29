@@ -729,7 +729,7 @@ if user_id == 'PH':
 
 #function for buying insurance
 insurance_update = ("UPDATE budget_lb%s SET r%s_insurance = %s WHERE role=%s;")
-def insure_me(user, action):
+def insure_me(board,user, action):
     cur = conn.cursor()
     cur.execute(insurance_update,(int(g_round),action,user))
     if action:
@@ -776,12 +776,12 @@ with st.sidebar:
                 with col2:
                     st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
                 if insure:
-                    insure_me(user_id, True)
+                    insure_me(board,user_id, True)
             else:
                 st.success('your property is insured for round ' + str(g_round))
                 cancel_policy = st.button(label='Cancel policy')
                 if cancel_policy:
-                    insure_me(user_id,False)
+                    insure_me(board,user_id,False)
     else:
         if not df.loc[user_id, 'r' + str(g_round) + '_insurance']:
             st.warning('You are not insured for round ' + str(g_round))
