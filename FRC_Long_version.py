@@ -74,7 +74,7 @@ except Exception as e:
 
 with st.sidebar:
     if user_roster.loc[user_name,'level'] > 1:
-        board = st.selectbox(label='FRC Board number', options=[1, 2, 3, 4, 5])
+        board = st.selectbox(label='FRC Board number', options=[1, 2, 3, 4, 5, 6])
         user_id = user_dict_inv[st.selectbox(label='Role', options=user_dict.values())]
     else:
         board = int(user_roster.loc[user_name,'board'])
@@ -517,15 +517,19 @@ def bidding_section():
         if int(df_m.loc[bid_measure, 'cost']) != 0:
             st.metric(label='Cost of ' + bid_measure, value=int(df_m.loc[bid_measure, 'cost']))
             bid_amount = int(st.selectbox(label='how much you would like to bid?', options=[x for x in range(1,11)]))
+
+            with col3_f:
+                st.metric(label='Your budget if bid successful', value=int(df.loc[user_id, 'cb'] - bid_amount), delta=-bid_amount)
+                make_bid = st.button("Make/Change the bid")
+
+            if make_bid:
+                make_bid_func(bid_measure, bid_amount)
         else:
             st.markdown('### The cost is covered by taxes')
 
-    with col3_f:
-        st.metric(label='Your budget if bid successful', value=int(df.loc[user_id, 'cb'] - bid_amount), delta=-bid_amount)
-        make_bid = st.button("Make/Change the bid")
 
-    if make_bid:
-        make_bid_func(bid_measure, bid_amount)
+
+
 
     st.subheader('Measures suggested')
     for measure in df_m.index.values:
@@ -786,7 +790,15 @@ with st.sidebar:
             st.success('your property is insured for round ' + str(g_round))
             st.info('You can no longer cancel your insurance for this round')
 st.markdown('''---''')
-with st.expander('Miro board', expanded=True):
-    components.iframe("https://miro.com/app/live-embed/uXjVOV_4o7o=/?moveToViewport=-23729,-4127,35785,17566&embedAutoplay=true",height=740)
+st.subheader('Miro board ' + str(int(board)))
+miro_dict = {1:['https://miro.com/app/live-embed/uXjVOR_le6g=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_le6g=/?invite_link_id=835958382187'],
+             2:['https://miro.com/app/live-embed/uXjVOR_gfI0=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_gfI0=/?invite_link_id=53493355924'],
+             3:['https://miro.com/app/live-embed/uXjVOR_g16s=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_g16s=/?invite_link_id=349135164503'],
+             4:['https://miro.com/app/live-embed/uXjVOR_hQ8o=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_hQ8o=/?invite_link_id=471512594109'],
+             5:['https://miro.com/app/live-embed/uXjVOR_h058=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h058=/?invite_link_id=575464384272'],
+             6:['https://miro.com/app/live-embed/uXjVOR_h1vw=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h1vw=/?invite_link_id=87971323805']}
 
-    st.write("Open board in a new tab [link](https://miro.com/app/board/uXjVOV_4o7o=/?invite_link_id=620862911939)")
+with st.expander('Miro board', expanded=True):
+    components.iframe(miro_dict[int(board)][0],height=740)
+
+    st.write("Open board in a new tab [link]("+miro_dict[int(board)][1]+')')
