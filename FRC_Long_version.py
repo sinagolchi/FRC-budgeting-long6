@@ -115,7 +115,7 @@ with st.expander('Participants budgets'):
 
 
 #sql queries for bidding
-update_bid_measure = ("UPDATE measures_lb%s SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
+update_bid_measure = ("UPDATE measures_lb1 SET person_bid = %s, total_bid = total_bid + %s WHERE measure_ID=%s;")
 update_bid_role =  ("UPDATE budget_lb%s SET r%s_measure = %s, r%s_bid = %s WHERE role=%s;")
 log_bid = ("INSERT INTO measure_log%s VALUES (NOW(),%s,%s,%s,%s);")
 
@@ -494,7 +494,7 @@ def bidding_section():
         else:
             cur = conn.cursor()
             cur.execute(update_bid_role,(int(board),int(g_round),measure,int(g_round),amount,user_id))
-            cur.execute(update_bid_measure, (int(board), user_id, amount, measure))
+            cur.execute(update_bid_measure, (user_id, amount, measure))
             if df.loc[user_id,'r1_measure'] == None:
                 cur.execute(log_bid,(int(board),'New',user_dict[user_id],amount,measure))
             else:
