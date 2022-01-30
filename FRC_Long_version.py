@@ -766,6 +766,19 @@ with st.sidebar:
                 insurance_price = st.number_input(label='insurance price',value=df_v.loc[board,'insurance_price'])
             with col2:
                 st.metric(label='Current Price', value=int(df_v.loc[board,'insurance_price']))
+
+            def set_insure_price():
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET insurance_slogan = %s, insurance_price = %s WHERE board= %s",(slogan,int(insurance_price),int(board)))
+                conn.commit()
+                with st.spinner('annoy people with insurance ads on YouTube'):
+                    time.sleep(2)
+                st.success('Insurance info updated')
+
+            insure_change = st.button('Confirm changes', key='Insurance_change_confirm')
+            if insure_change:
+                set_insure_price()
+
         else:
             st.header('Flood insurance')
             if not df.loc[user_id,'r'+str(g_round)+'_insurance']:
