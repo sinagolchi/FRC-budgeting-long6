@@ -476,6 +476,7 @@ def taxes_section():
             confirm_m_payment = st.button(label='Process mandatory payments')
             if confirm_m_payment:
                 process_m_p(user_id, int(df_v.loc[board, 'power_price']), 'PUC')
+                set_as_paid(user_id)
 
 def bidding_section():
     st.markdown("""___""")
