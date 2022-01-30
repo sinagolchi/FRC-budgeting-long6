@@ -785,7 +785,7 @@ with st.sidebar:
                 st.warning('You are not insured for round ' + str(g_round))
                 st.subheader('Would you like to purchase insurance?')
                 st.caption('Insurance company advertisement:')
-                st.markdown(df_v.loc[board,'insurance_slogan'])
+                st.info(df_v.loc[board,'insurance_slogan'])
 
                 col1, col2 = st.columns(2)
                 with col1:
