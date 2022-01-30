@@ -530,8 +530,6 @@ def bidding_section():
 
 
 
-
-
     st.subheader('Measures suggested')
     for measure in df_m.index.values:
         if measure in df['r' + str(g_round) + '_measure'].to_list():
@@ -603,6 +601,7 @@ def transaction_section():
         df_p_log = df_p_log.rename(
             columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
                      'to_user': 'Receiving party'})
+        df_p_log.set_index('id')
         if not df_p_log.empty:
             df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
             st.dataframe(df_p_log)
@@ -734,8 +733,8 @@ def insure_me(board,user, action):
     cur = conn.cursor()
     cur.execute(insurance_update,(int(board),int(g_round),action,user))
     if action:
-        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) - 1, user_id))
-        cur.execute(update_delta, (int(board), -1, user_id))
+        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) - int(df_v.loc[board,'insurance_price']), user_id))
+        cur.execute(update_delta, (int(board), -int(df_v.loc[board,'insurance_price']), user_id))
         conn.commit()
         with st.spinner('Preparing your policy'):
             time.sleep(2)
@@ -743,8 +742,8 @@ def insure_me(board,user, action):
         time.sleep(2)
         st.experimental_rerun()
     else:
-        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) + 1, user_id))
-        cur.execute(update_delta, (int(board), +1, user_id))
+        cur.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) + int(df_v.loc[board,'insurance_price']), user_id))
+        cur.execute(update_delta, (int(board), +int(df_v.loc[board,'insurance_price']), user_id))
         conn.commit()
         with st.spinner('Cancelling your policy'):
             time.sleep(2)
@@ -791,7 +790,7 @@ with st.sidebar:
                 with col1:
                     insure = st.button(label='Buy insurance')
                 with col2:
-                    st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-1),delta=-1)
+                    st.metric(label='Budget preview', value=int(df.loc[user_id,'cb']-int(df_v.loc[board,'insurance_price'])),delta=-int(df_v.loc[board,'insurance_price']))
                 if insure:
                     insure_me(board,user_id, True)
             else:
