@@ -601,7 +601,8 @@ def transaction_section():
         df_p_log = df_p_log.rename(
             columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
                      'to_user': 'Receiving party'})
-        df_p_log.set_index('id')
+        df_p_log['id'] = [int(p) for p in df_p_log['id']]
+        df_p_log.set_index('id',inplace=True)
         if not df_p_log.empty:
             df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
             st.dataframe(df_p_log)
