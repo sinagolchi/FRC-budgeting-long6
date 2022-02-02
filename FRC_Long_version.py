@@ -700,7 +700,7 @@ def flood():
             if not df.loc[user_id,'r'+str(g_round)+'_insurance']:
                 st.warning('Unfortunately, you were not insured for this round')
                 if user_id in qulified_for_DRP:
-                    st.success('You are eligible for DRP rebate of 3 budget units, ask provincial politician for rebate')
+                    st.success('You are eligible for DRP rebate of upto 3 budget units, The admin will process your claim')
                 else:
                     st.warning('Unfortunately you are not eligible for DRP')
             else:
