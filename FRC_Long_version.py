@@ -560,7 +560,7 @@ def transaction_section():
         curA.execute(update_delta,(int(board), -amount,user_id))
         curA.execute(update_budget,(int(board), int(df.loc[r_party,'cb']+amount),r_party))
         curA.execute(update_delta,(int(board), +amount,r_party))
-        curA.execute(log_transaction,(int(board) ,user_dict[user_id],amount,r_party))
+        curA.execute(log_transaction,(int(board) ,user_dict[user_id],amount,user_dict[r_party]))
         conn.commit()
 
 
@@ -583,29 +583,6 @@ def transaction_section():
         time.sleep(3)
         st.experimental_rerun()
 
-    st.header('Summary')
-    with st.expander("Bidding summary"):
-        df_m_log = get_sql('measure_log' + str(board))
-        est = pytz.timezone('EST')
-        df_m_log = df_m_log.rename(
-            columns={'datetime': 'Timestamp', 'bid_type': 'Type of bid', 'person_biding': 'Role of bidder',
-                     'amount': 'Amount of bid', 'measure': 'Measure'})
-        if not df_m_log.empty:
-            df_m_log['Timestamp'] = df_m_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
-            st.dataframe(df_m_log)
-
-
-    with st.expander("Transaction summary"):
-        df_p_log = get_sql('payment'+str(board))
-        est = pytz.timezone('EST')
-        df_p_log = df_p_log.rename(
-            columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
-                     'to_user': 'Receiving party'})
-        df_p_log['id'] = [int(p) for p in df_p_log['id']]
-        df_p_log.set_index('id',inplace=True)
-        if not df_p_log.empty:
-            df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
-            st.dataframe(df_p_log)
 
     st.subheader('Measures suggested')
     for measure in df_m.index.values:
@@ -627,6 +604,29 @@ def transaction_section():
     confirm_rerun = st.button(label='Refresh Data', key='bidding section')
     if confirm_rerun:
         refresh()
+
+    st.header('Summary')
+    with st.expander("Bidding summary"):
+        df_m_log = get_sql('measure_log' + str(board))
+        est = pytz.timezone('EST')
+        df_m_log = df_m_log.rename(
+            columns={'datetime': 'Timestamp', 'bid_type': 'Type of bid', 'person_biding': 'Role of bidder',
+                     'amount': 'Amount of bid', 'measure': 'Measure'})
+        if not df_m_log.empty:
+            df_m_log['Timestamp'] = df_m_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
+            st.dataframe(df_m_log)
+
+    with st.expander("Transaction summary"):
+        df_p_log = get_sql('payment' + str(board))
+        est = pytz.timezone('EST')
+        df_p_log = df_p_log.rename(
+            columns={'datetime': 'Timestamp', 'from_user': 'Sender', 'amount': 'Transaction total',
+                     'to_user': 'Receiving party'})
+        df_p_log['id'] = [int(p) for p in df_p_log['id']]
+        df_p_log.set_index('id', inplace=True)
+        if not df_p_log.empty:
+            df_p_log['Timestamp'] = df_p_log['Timestamp'].dt.tz_convert('EST').dt.strftime('%B %d, %Y, %r')
+            st.dataframe(df_p_log)
 
 #Voting section
 
