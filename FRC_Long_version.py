@@ -540,7 +540,7 @@ def bidding_section():
             with col2:
                 biders = list(df[df['r' + str(g_round) + '_measure'] == measure].index)
                 amounts = df[df['r' + str(g_round) + '_measure'] == measure]['r' + str(g_round) + '_bid'].to_list()
-                st.caption('Bidders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(biders, amounts)]))
+                st.caption('Bidders: ' + ',  '.join([user_dict[p] + ': \$' + str(b) for p, b in zip(biders, amounts)]))
                 try:
                     st.progress(int(sum([int(i) for i in df[df['r' + str(g_round) + '_measure'] == measure][
                         'r' + str(g_round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
