@@ -6,7 +6,7 @@ import pytz
 import streamlit.components.v1 as components
 import seaborn as sns
 
-st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='Logo 800x800 px.svg') #set streamlit page to wide mode
+st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='FRC Logo White-100px.png') #set streamlit page to wide mode
 
 def refresh():
     st.experimental_rerun()
