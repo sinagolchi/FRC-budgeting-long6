@@ -508,7 +508,7 @@ def bidding_section():
             st.experimental_rerun()
 
 
-    st.header('Phase 1a: FRM Measures Bidding')
+    st.header('Phase 1A: FRM Measures Bidding')
     col1_f, col2_f, col3_f = st.columns(3)
 
     with col1_f:
