@@ -545,7 +545,8 @@ def bidding_section():
                     st.progress(int(sum([int(i) for i in df[df['r' + str(g_round) + '_measure'] == measure][
                         'r' + str(g_round) + '_bid'].to_list()]) / df_m.loc[measure, 'cost'] * 100))
                 except:
-                    st.warning('The bid on this measure have exceeded the cost')
+                    st.warning('The bid on this measure have exceeded the cost, please readjust bids')
+
     confirm_rerun = st.button(label='Refresh Data',key='bidding section')
     if confirm_rerun:
         refresh()
@@ -808,7 +809,7 @@ with st.sidebar:
             st.info('You can no longer cancel your insurance for this round')
 st.markdown('''---''')
 st.subheader('Miro board ' + str(int(board)))
-miro_dict = {1:['https://miro.com/app/live-embed/uXjVOJ_4_5c=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_le6g=/?invite_link_id=835958382187'],
+miro_dict = {1:['https://miro.com/app/live-embed/uXjVOJ_4_5c=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOJ_4_5c=/?invite_link_id=148561260422'],
              2:['https://miro.com/app/live-embed/uXjVOR_gfI0=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_gfI0=/?invite_link_id=53493355924'],
              3:['https://miro.com/app/live-embed/uXjVOR_g16s=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_g16s=/?invite_link_id=349135164503'],
              4:['https://miro.com/app/live-embed/uXjVOR_hQ8o=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_hQ8o=/?invite_link_id=471512594109'],
