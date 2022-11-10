@@ -8,7 +8,7 @@ import seaborn as sns
 
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='FRC Logo White-100px.png') #set streamlit page to wide mode
 
-game_type = 'full'
+game_type = 'simplified'
 
 def refresh():
     st.experimental_rerun()
