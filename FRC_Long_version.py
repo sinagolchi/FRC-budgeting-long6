@@ -8,7 +8,7 @@ import seaborn as sns
 
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='FRC Logo White-100px.png') #set streamlit page to wide mode
 
-game_type = 'simplified'
+game_type = 'full'
 
 def refresh():
     st.experimental_rerun()
@@ -64,7 +64,7 @@ def choose_role(user:str,board:int):
         st.warning('Note: If the role you chose is taken already you will receive a prompt to choose another')
         dfr = get_sql('frc_users')
         dfr.set_index('user',inplace=True)
-        chosen_roles = list(dfr[dfr['board'] == 1]['role'])
+        chosen_roles = list(dfr[dfr['board'] == board]['role'])
         print(chosen_roles)
         roles = user_dict.keys()
         role_options = [user_dict[role] for role in roles if role not in chosen_roles]
