@@ -883,7 +883,7 @@ def flood():
         st.success('You are not affected by the flood')
 
 
-dict_phase_case = {0:tax_increacse_section ,1:tax_section_short, 2: bidding_section, 3:transaction_section, 4:flood, 5:vote_short}
+dict_phase_case = {0:tax_increacse_section ,1:tax_section_short, 2: bidding_section, 3:transaction_section, 4:flood, 5:voting}
 
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
