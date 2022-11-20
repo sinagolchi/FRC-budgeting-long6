@@ -42,7 +42,7 @@ else:
                  'WR': 'Waterfront Resident', 'F': 'Farmer', 'LD': 'Land Developer', 'LEF': 'Large Engineering Firm'}
 user_dict_inv= {v:k for k,v in user_dict.items()}
 
-phase_dict = {0: 'Adjusting tax rate (for government only)', 1: 'Phase 3: Updating Budget', 2: 'Phase 1A: FRM Measure bidding', 3: 'Phase 1B: Transactions', 4: 'Phase 2: Flood and damage analysis', 5: 'Phase 4: Vote'}
+phase_dict = {0: 'Adjusting tax rate (for government only)', 1: 'Phase 3: Updating Budget', 2: 'Phase 1: FRM Measure bidding and implementation', 3: 'Phase 1B: Transactions', 4: 'Phase 2: Flood and damage analysis', 5: 'Phase 4: Vote'}
 
 
 if game_type == 'full':
@@ -99,7 +99,7 @@ def choose_role(user:str,board:int):
 
 
 st.title('FRC Game companion WebApp')
-st.caption('Developed by Sina Golchi with collaboration with FRC Team under creative commons license')
+st.caption('Developed by Sina Golchi in collaboration with FRC Team under creative commons license')
 
 #sidebar and login system
 
@@ -565,7 +565,8 @@ def bidding_section():
             st.experimental_rerun()
 
 
-    st.header('Phase 1A: FRM Measures Bidding')
+    #st.header('Phase 1: FRM Measures Bidding')
+    st.markdown('<p style="font-size: 40px; color:rgb(58, 134, 255);">Phase 1: FRM Measures Bidding</p>', unsafe_allow_html=True)
     col1_f, col2_f, col3_f = st.columns(3)
 
     with col1_f:
@@ -616,7 +617,7 @@ def bidding_section():
                                   int(df_m.loc[m_row['measure'], 'cost'])))
             with col2:
                 st.caption(
-                    'Bidders: ' + ',  '.join([user_dict[p] + ': $' + str(b) for p, b in zip(m_row['biders'], m_row['amounts'])]))
+                    'Bidders: ' + ',  '.join([user_dict[p] + ': \$' + str(b) for p, b in zip(m_row['biders'], m_row['amounts'])]))
 
                 st.progress(int(sum(m_row['amounts']) / df_m.loc[m_row['measure'], 'cost'] * 100))
             with col3:
@@ -705,7 +706,7 @@ def transaction_section():
             st.dataframe(df_p_log)
 
 #Transactions for short version
-def transations_short():
+def transactions_short():
     def money_transfer(amount, r_party):
         curA = conn.cursor()
         curA.execute(update_budget, (int(board), int(df.loc[user_id, 'cb']) - amount, user_id))
@@ -715,7 +716,7 @@ def transations_short():
         curA.execute(log_transaction, (int(board), user_dict[user_id], amount, user_dict[r_party]))
         conn.commit()
 
-    st.header("Phase 1B: Transactions")
+    st.header("Secret Transactions")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         t_amount = int(st.selectbox(label='Budget to transfer', options=[x for x in range(1, 10)]))
@@ -737,7 +738,7 @@ def transations_short():
         st.experimental_rerun()
 
     def styler(val):
-        color = 'green' if val == user_dict[user_id] else None
+        color = 'green' if val == user_dict[user_id] else 'blue'
         return 'color: %s' % color
 
     st.subheader('History')
@@ -901,10 +902,10 @@ if user_id == 'PH':
             st.image('imgs/SLR test.png')
             st.image('imgs/Storm surge winter flooding.png')
 
-if game_type == 'simplified':
+if game_type == 'Simplified' or game_type == 'full':
     st.markdown("""___""")
     with st.expander('Secret transactions'):
-        transations_short()
+        transactions_short()
 
 #function for buying insurance
 insurance_update = ("UPDATE budget_lb%s SET r%s_insurance = %s WHERE role=%s;")
@@ -987,9 +988,9 @@ with st.sidebar:
 
 st.markdown('''---''')
 st.subheader('Miro board ' + str(int(board)))
-miro_dict = {1:['https://miro.com/app/live-embed/o9J_lNDWMVw=/?moveToViewport=-17253,-6353,15383,6977&embedAutoplay=true','https://miro.com/app/board/o9J_lNDWMVw=/?share_link_id=717927830108'],
-             2:['https://miro.com/app/live-embed/uXjVOR_gfI0=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_gfI0=/?invite_link_id=53493355924'],
-             3:['https://miro.com/app/live-embed/uXjVOR_g16s=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_g16s=/?invite_link_id=349135164503'],
+miro_dict = {1:['https://miro.com/app/live-embed/uXjVPBmsT1M=/?moveToViewport=-9072,-6902,6632,5731&embedId=365072173830&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsT1M=/?share_link_id=948326069198'],
+             2:['https://miro.com/app/live-embed/uXjVPBmsSb4=/?moveToViewport=-9053,-7224,6766,5721&embedId=428245309785&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsSb4=/?share_link_id=478140142614'],
+             3:['https://miro.com/app/live-embed/uXjVPBmsTmg=/?moveToViewport=-10463,-6096,8785,4266&embedId=26206919528&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsTmg=/?share_link_id=27320976313'],
              4:['https://miro.com/app/live-embed/uXjVOR_hQ8o=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_hQ8o=/?invite_link_id=471512594109'],
              5:['https://miro.com/app/live-embed/uXjVOR_h058=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h058=/?invite_link_id=575464384272'],
              6:['https://miro.com/app/live-embed/uXjVOR_h1vw=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h1vw=/?invite_link_id=87971323805']}
