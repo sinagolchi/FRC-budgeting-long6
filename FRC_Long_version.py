@@ -42,7 +42,7 @@ else:
                  'WR': 'Waterfront Resident', 'F': 'Farmer', 'LD': 'Land Developer', 'LEF': 'Large Engineering Firm'}
 user_dict_inv= {v:k for k,v in user_dict.items()}
 
-phase_dict = {0: 'Adjusting tax rate (for government only)', 1: 'Phase 3: Updating Budget', 2: 'Phase 1: FRM Measure bidding and implementation', 3: 'Phase 1B: Transactions', 4: 'Phase 2: Flood and damage analysis', 5: 'Phase 4: Vote'}
+phase_dict = {0: 'Adjusting tax rate (for government only)', 3: 'Phase 3: Updating Budget', 1: 'Phase 1: FRM Measure bidding and implementation', 5: 'Phase 1B: Transactions', 2: 'Phase 2: Flood and damage analysis', 4: 'Phase 4: Vote'}
 
 
 if game_type == 'full':
