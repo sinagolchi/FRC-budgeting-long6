@@ -8,7 +8,7 @@ import seaborn as sns
 
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='FRC Logo White-100px.png') #set streamlit page to wide mode
 
-game_type = 'full'
+game_type = 'Simplified'
 
 def refresh():
     st.experimental_rerun()
@@ -988,8 +988,8 @@ with st.sidebar:
 
 st.markdown('''---''')
 st.subheader('Miro board ' + str(int(board)))
-miro_dict = {1:['https://miro.com/app/live-embed/uXjVPBmsT1M=/?moveToViewport=-9072,-6902,6632,5731&embedId=365072173830&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsT1M=/?share_link_id=948326069198'],
-             2:['https://miro.com/app/live-embed/uXjVPBmsSb4=/?moveToViewport=-9053,-7224,6766,5721&embedId=428245309785&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsSb4=/?share_link_id=478140142614'],
+miro_dict = {1:['https://miro.com/app/live-embed/uXjVP5Rnvd8=/?moveToViewport=-1278,-7444,8403,5935&embedId=143045527681&embedAutoplay=true','https://miro.com/app/board/uXjVP5Rnvd8=/?share_link_id=424657725671'],
+             2:['https://miro.com/app/live-embed/uXjVP5RnvfU=/?moveToViewport=-1096,-7622,8193,6241&embedId=384110064484&embedAutoplay=true','https://miro.com/app/board/uXjVP5RnvfU=/?share_link_id=17892545068'],
              3:['https://miro.com/app/live-embed/uXjVPBmsTmg=/?moveToViewport=-10463,-6096,8785,4266&embedId=26206919528&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsTmg=/?share_link_id=27320976313'],
              4:['https://miro.com/app/live-embed/uXjVOR_hQ8o=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_hQ8o=/?invite_link_id=471512594109'],
              5:['https://miro.com/app/live-embed/uXjVOR_h058=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h058=/?invite_link_id=575464384272'],
