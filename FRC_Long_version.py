@@ -887,6 +887,40 @@ def flood():
 #dict_phase_case = {0:tax_increacse_section ,1:tax_section_short, 2: bidding_section, 3:transaction_section, 4:flood, 5:voting}
 dict_phase_case = {0:None , 1: bidding_section, 2:flood, 3:tax_section_short, 4:voting}
 
+#### Practice version
+if df_v.loc[board,'practice']:
+    def progress_game(direction):
+        prog_counter = int(df_v.loc[board, 'prog_counter'])
+        dict_prog = {0: [1, 1], 1: [1, 2], 2: [1, 3], 3: [1, 4], 4: [2, 1], 5: [2, 2], 6: [2, 3], 7: [2, 4], 8: [3, 1],
+                     9: [3, 2], 10: [3, 3], 11: [3, 4]}
+        if direction == 'forward':
+            prog_counter += 1
+        else:
+            prog_counter -= 1
+        curA = conn.cursor()
+        curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s", (dict_prog[prog_counter][1], board))
+        curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s", (dict_prog[prog_counter][0], board))
+        conn.commit()
+        curA = conn.cursor()
+        curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
+        conn.commit()
+        st.success('We progressed to next phase!')
+
+
+    set_phase = int(df_v.loc[board, 'phase'])
+    prog_counter = int(df_v.loc[board, 'prog_counter'])
+    with st.sidebar:
+        st.warning('Practice mode is enabled, use buttons below to progress game')
+        colu1, colu2 = st.columns(2)
+
+        with colu1:
+            st.button(label='Return', on_click=progress_game, kwargs={'direction': 'return'},
+                      help='Click here to go back to the last stage', disabled=prog_counter == 0)
+
+        with colu2:
+            st.button(label='Progress game', on_click=progress_game, kwargs={'direction': 'forward'},
+                      help='Click here to progress to next stage', disabled=prog_counter == 11)
+
 if dict_phase_case[df_v.loc[board,'phase']] is not None:
     dict_phase_case[df_v.loc[board,'phase']]()
 
@@ -931,6 +965,7 @@ def insure_me(board,user, action):
         st.success('Your policy was canceled successfully')
         time.sleep(2)
         st.experimental_rerun()
+
 
 
 #Insurance section sidebar
