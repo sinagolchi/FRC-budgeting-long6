@@ -899,8 +899,12 @@ if df_v.loc[board,'practice']:
             prog_counter -= 1
         curA = conn.cursor()
         curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s", (dict_prog[prog_counter][1], board))
+        conn.commit()
+
+        curA = conn.cursor()
         curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s", (dict_prog[prog_counter][0], board))
         conn.commit()
+
         curA = conn.cursor()
         curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
         conn.commit()
