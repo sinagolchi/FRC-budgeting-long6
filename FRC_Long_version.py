@@ -1026,7 +1026,7 @@ st.markdown('''---''')
 st.subheader('Miro board ' + str(int(board)))
 miro_dict = {1:['https://miro.com/app/live-embed/uXjVP5Rnvd8=/?moveToViewport=-1278,-7444,8403,5935&embedId=143045527681&embedAutoplay=true','https://miro.com/app/board/uXjVP5Rnvd8=/?share_link_id=424657725671'],
              2:['https://miro.com/app/live-embed/uXjVP5RnvfU=/?moveToViewport=-1096,-7622,8193,6241&embedId=384110064484&embedAutoplay=true','https://miro.com/app/board/uXjVP5RnvfU=/?share_link_id=17892545068'],
-             3:['https://miro.com/app/live-embed/uXjVPBmsTmg=/?moveToViewport=-10463,-6096,8785,4266&embedId=26206919528&embedAutoplay=true','https://miro.com/app/board/uXjVPBmsTmg=/?share_link_id=27320976313'],
+             3:['https://miro.com/app/live-embed/uXjVP5_e7e4=/?moveToViewport=-1198,-7710,8351,6000&embedId=411628241074&embedAutoplay=true','https://miro.com/app/board/uXjVP5_e7e4=/?share_link_id=436576011760'],
              4:['https://miro.com/app/live-embed/uXjVOR_hQ8o=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_hQ8o=/?invite_link_id=471512594109'],
              5:['https://miro.com/app/live-embed/uXjVOR_h058=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h058=/?invite_link_id=575464384272'],
              6:['https://miro.com/app/live-embed/uXjVOR_h1vw=/?moveToViewport=-23351,-9416,27515,14305&embedAutoplay=true','https://miro.com/app/board/uXjVOR_h1vw=/?invite_link_id=87971323805']}
