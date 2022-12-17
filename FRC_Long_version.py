@@ -898,25 +898,26 @@ if df_v.loc[board,'practice']:
         else:
             prog_counter -= 1
 
+        for i in range(4):
+            try:
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s",
+                             (dict_prog[prog_counter][1], board))
+                conn.commit()
 
-        try:
-            curA = conn.cursor()
-            curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s",
-                         (dict_prog[prog_counter][1], board))
-            conn.commit()
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s",
+                             (dict_prog[prog_counter][0], board))
+                conn.commit()
 
-            curA = conn.cursor()
-            curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s",
-                         (dict_prog[prog_counter][0], board))
-            conn.commit()
-
-            curA = conn.cursor()
-            curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
-            conn.commit()
-            st.success('We progressed to next phase!')
-        except:
-            st.error('Progression failed, Try again')
-            pass
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
+                conn.commit()
+                st.success('We progressed to next phase!')
+                break
+            except:
+                st.error('Progression failed, Try again')
+                pass
 
 
 
