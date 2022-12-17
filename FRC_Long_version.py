@@ -897,18 +897,34 @@ if df_v.loc[board,'practice']:
             prog_counter += 1
         else:
             prog_counter -= 1
-        curA = conn.cursor()
-        curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s", (dict_prog[prog_counter][1], board))
-        conn.commit()
 
-        curA = conn.cursor()
-        curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s", (dict_prog[prog_counter][0], board))
-        conn.commit()
+        for x in range(0, 4):  # try 4 times
+            try:
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s",
+                             (dict_prog[prog_counter][1], board))
+                conn.commit()
 
-        curA = conn.cursor()
-        curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
-        conn.commit()
-        st.success('We progressed to next phase!')
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s",
+                             (dict_prog[prog_counter][0], board))
+                conn.commit()
+
+                curA = conn.cursor()
+                curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
+                conn.commit()
+                st.success('We progressed to next phase!')
+                str_error = None
+            except Exception as str_error:
+                pass
+
+            if str_error:
+                time.sleep(1)  # wait for 2 seconds before trying to fetch the data again
+            else:
+                break
+
+
+
 
 
     set_phase = int(df_v.loc[board, 'phase'])
