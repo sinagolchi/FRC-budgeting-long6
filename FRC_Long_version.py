@@ -898,31 +898,26 @@ if df_v.loc[board,'practice']:
         else:
             prog_counter -= 1
 
-        for x in range(0, 4):  # try 4 times
-            try:
-                curA = conn.cursor()
-                curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s",
-                             (dict_prog[prog_counter][1], board))
-                conn.commit()
 
-                curA = conn.cursor()
-                curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s",
-                             (dict_prog[prog_counter][0], board))
-                conn.commit()
+        try:
+            curA = conn.cursor()
+            curA.execute("UPDATE frc_long_variables SET phase=%s WHERE board=%s",
+                         (dict_prog[prog_counter][1], board))
+            conn.commit()
 
-                curA = conn.cursor()
-                curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
-                conn.commit()
-                st.success('We progressed to next phase!')
-                str_error = None
-            except Exception as e:
-                str_error = e
-                pass
+            curA = conn.cursor()
+            curA.execute("UPDATE frc_long_variables SET round=%s WHERE board=%s",
+                         (dict_prog[prog_counter][0], board))
+            conn.commit()
 
-            if str_error:
-                time.sleep(1)  # wait for 2 seconds before trying to fetch the data again
-            else:
-                break
+            curA = conn.cursor()
+            curA.execute("UPDATE frc_long_variables SET prog_counter=%s WHERE board=%s", (prog_counter, board))
+            conn.commit()
+            st.success('We progressed to next phase!')
+        except:
+            st.error('Progression failed, Try again')
+            pass
+
 
 
 
