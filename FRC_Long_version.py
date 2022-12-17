@@ -915,7 +915,8 @@ if df_v.loc[board,'practice']:
                 conn.commit()
                 st.success('We progressed to next phase!')
                 str_error = None
-            except Exception as str_error:
+            except Exception as e:
+                str_error = e
                 pass
 
             if str_error:
