@@ -6,6 +6,7 @@ import pytz
 import streamlit.components.v1 as components
 import seaborn as sns
 
+demo = True
 st.set_page_config(layout='wide',page_title='FRC Game Companion',page_icon='FRC Logo White-100px.png') #set streamlit page to wide mode
 
 game_type = 'Simplified'
@@ -111,7 +112,9 @@ try:
     st.sidebar.success('Welcome '+ user_roster.loc[user_name,'name'])
 except Exception as e:
     print(e)
-    if user_name == '':
+    if demo:
+        st.info('Demo mode is active! logging in is not required.')
+    elif user_name == '':
         st.warning('You are not logged in! Please login from the sidebar on the left.\n'
                    'If sidebar is hidden reveal it via the arrow on the upper left of this page')
         st.stop()
@@ -121,7 +124,10 @@ except Exception as e:
 
 
 with st.sidebar:
-    if user_roster.loc[user_name,'level'] > 1:
+    if demo:
+        board = 3
+        user_id = user_dict_inv[st.selectbox(label='Role', options=user_dict.values())]
+    elif user_roster.loc[user_name,'level'] > 1:
         board = st.selectbox(label='FRC Board number', options=[1, 2, 3, 4, 5, 6])
         user_id = user_dict_inv[st.selectbox(label='Role', options=user_dict.values())]
     else:
