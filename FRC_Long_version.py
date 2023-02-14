@@ -890,8 +890,8 @@ def flood():
         st.success('You are not affected by the flood')
 
 
-#dict_phase_case = {0:tax_increacse_section ,1:tax_section_short, 2: bidding_section, 3:transaction_section, 4:flood, 5:voting}
-dict_phase_case = {0:None , 1: bidding_section, 2:flood, 3:tax_section_short, 4:vote_short}
+dict_phase_case = {0:tax_increacse_section ,1:tax_section_short, 2: bidding_section, 3:transaction_section, 4:flood, 5:voting}
+#dict_phase_case = {0:None , 1: bidding_section, 2:flood, 3:tax_section_short, 4:vote_short}
 
 #### Practice version
 if df_v.loc[board,'practice']:
